@@ -1,0 +1,20 @@
+{
+  "name": "discord-blacklist-bot",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A per-server Discord blacklist moderation bot",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "deploy": "node src/deploy-commands.js",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "better-sqlite3": "^12.4.1",
+    "discord.js": "^14.24.2",
+    "dotenv": "^16.6.1"
+  }
+}

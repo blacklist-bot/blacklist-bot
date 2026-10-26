@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#101313">
+    <meta name="description" content="Public index of Relay. Blacklists entries.">
+    <title>Relay. Blacklists | Public Index</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <div class="site-frame">
+      <header class="topbar">
+        <a class="wordmark" href="./" aria-label="Relay. Blacklists home">
+          <span class="wordmark-mark" aria-hidden="true">R</span>
+          <span>Relay<span class="wordmark-dot">.</span><br><span class="wordmark-sub">Blacklists</span></span>
+        </a>
+        <div class="live-indicator"><span class="live-dot" aria-hidden="true"></span> PUBLIC REGISTER</div>
+      </header>
+
+      <main>
+        <section class="intro" aria-labelledby="page-title">
+          <div class="intro-copy">
+            <p class="eyebrow"><span>COMMUNITY MODERATION</span><span class="eyebrow-rule"></span><span id="source-name">SOURCE REGISTER</span></p>
+            <h1 id="page-title">Relay<span class="title-period">.</span><br><span class="title-light">Blacklists</span></h1>
+            <p class="intro-note">A transparent index of accounts listed by the source server.</p>
+          </div>
+          <div class="summary" aria-label="Blacklist summary">
+            <div class="summary-label">ACTIVE ENTRIES</div>
+            <div class="summary-value" id="entry-count">--</div>
+            <div class="summary-foot"><span class="summary-mark" aria-hidden="true">+</span> Synced from the app</div>
+          </div>
+        </section>
+
+        <section class="registry" aria-labelledby="registry-heading">
+          <div class="registry-head">
+            <div>
+              <p class="section-index">01 / INDEX</p>
+              <h2 id="registry-heading">Blacklist register</h2>
+            </div>
+            <div class="updated-block">
+              <span class="updated-label">LAST SYNC</span>
+              <time id="last-updated">Waiting for data</time>
+            </div>
+          </div>
+
+          <div class="toolbar">
+            <label class="search-box">
+              <span class="search-icon" aria-hidden="true"></span>
+              <span class="visually-hidden">Search user IDs</span>
+              <input id="search" type="search" placeholder="Search by Discord user ID" autocomplete="off" spellcheck="false">
+              <kbd>/</kbd>
+            </label>
+            <button class="refresh-button" id="refresh" type="button" aria-label="Refresh blacklist" title="Refresh blacklist">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5M5.6 9a7 7 0 0 1 11.6-2L20 12M4 12l2.8 5a7 7 0 0 0 11.6-2"/></svg>
+              <span>Refresh</span>
+            </button>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th scope="col">DISCORD USER ID</th><th scope="col">DATE ADDED</th><th scope="col">STATUS</th></tr>
+              </thead>
+              <tbody id="entries">
+                <tr><td colspan="3" class="table-state">Loading register...</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="registry-foot">
+            <span id="result-count">Loading entries</span>
+            <span class="visibility-note"><span aria-hidden="true">◉</span> Public data</span>
+          </div>
+          <p class="page-error" id="error" role="status" hidden></p>
+        </section>
+      </main>
+
+      <footer class="footer">
+        <span>RELAY. BLACKLISTS <span class="footer-separator">/</span> PUBLIC INDEX</span>
+        <span>User IDs and dates only. No reasons or moderator details are published.</span>
+      </footer>
+    </div>
+  </body>
+</html>
