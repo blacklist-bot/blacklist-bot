@@ -72,17 +72,27 @@ kbd { padding: 2px 6px; border: 1px solid var(--line); color: var(--subtle); fon
 .refresh-button:disabled { cursor: wait; opacity: .65; }
 .refresh-button svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.6; }
 
-.table-wrap { overflow-x: auto; border: 1px solid var(--line); background: rgb(23 27 27 / 88%); }
-table { width: 100%; border-collapse: collapse; text-align: left; }
-thead { background: #1b201f; }
-th { height: 42px; padding: 0 17px; color: var(--subtle); font-size: 9px; font-weight: 400; }
-td { height: 57px; padding: 0 17px; border-top: 1px solid var(--line-soft); color: var(--muted); font-size: 12px; }
-td:first-child { color: var(--text); font-family: var(--mono); font-size: 12px; }
-.user-link { text-decoration-color: var(--line); text-underline-offset: 3px; }
-.user-link:hover { color: var(--accent); text-decoration-color: var(--accent); }
+.entry-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.entry-card { min-width: 0; padding: 17px; border: 1px solid var(--line); border-radius: 3px; background: linear-gradient(145deg, rgb(180 239 114 / 3%), transparent 46%), var(--surface); transition: border-color .16s ease, transform .16s ease; }
+.entry-card:hover { border-color: #58645c; transform: translateY(-2px); }
+.card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.card-identity { min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+.card-index, .card-date { color: var(--subtle); font-family: var(--mono); font-size: 9px; letter-spacing: .05em; }
+.user-id { overflow-wrap: anywhere; color: var(--text); font-family: var(--mono); font-size: 14px; text-decoration-color: var(--line); text-underline-offset: 3px; }
+.user-id:hover { color: var(--accent); text-decoration-color: var(--accent); }
 .status-tag { display: inline-flex; align-items: center; gap: 7px; color: var(--accent-soft); font-family: var(--mono); font-size: 9px; text-transform: uppercase; }
 .status-tag::before { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); content: ""; }
-.table-state { height: 105px; color: var(--subtle); text-align: center; font-family: var(--mono); font-size: 11px; }
+.card-date { margin: 15px 0 0; }
+.card-section { margin-top: 16px; padding-top: 13px; border-top: 1px solid var(--line-soft); }
+.card-section h3 { margin: 0 0 7px; color: var(--accent); font-family: var(--mono); font-size: 9px; font-weight: 400; letter-spacing: .07em; text-transform: uppercase; }
+.reason-copy { margin: 0; color: #c0cac2; font-size: 12px; line-height: 1.65; overflow-wrap: anywhere; white-space: pre-wrap; }
+.evidence-items { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 10px; }
+.evidence-items > a:not(.image-proof-link) { display: inline-flex; padding: 7px 9px; border: 1px solid var(--line); color: var(--accent-soft); font-size: 11px; text-decoration: none; overflow-wrap: anywhere; }
+.evidence-items > a:not(.image-proof-link):hover { border-color: var(--accent); }
+.image-proof-link { max-width: 100%; display: block; }
+.proof-image { max-width: 100%; width: auto; max-height: 230px; display: block; border: 1px solid var(--line); object-fit: contain; }
+.no-proof, .empty-state { color: var(--subtle); font-family: var(--mono); font-size: 11px; }
+.empty-state { grid-column: 1 / -1; display: grid; min-height: 110px; place-items: center; padding: 20px; border: 1px dashed var(--line); text-align: center; }
 .registry-foot { display: flex; justify-content: space-between; gap: 18px; padding: 12px 1px 0; color: var(--subtle); font-size: 9px; }
 .visibility-note { color: var(--muted); }
 .visibility-note span { color: var(--accent); }
@@ -111,9 +121,9 @@ td:first-child { color: var(--text); font-family: var(--mono); font-size: 12px; 
   .search-box input { font-size: 11px; }
   .refresh-button { width: 44px; padding: 0; }
   .refresh-button span { display: none; }
-  th { padding: 0 10px; font-size: 8px; }
-  td { padding: 0 10px; font-size: 10px; }
-  td:first-child { font-size: 10px; }
+  .entry-grid { grid-template-columns: 1fr; gap: 10px; }
+  .entry-card { padding: 15px; }
+  .user-id { font-size: 12px; }
   .status-tag { font-size: 8px; }
   .footer { flex-direction: column; gap: 5px; }
 }

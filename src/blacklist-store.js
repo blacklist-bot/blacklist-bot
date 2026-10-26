@@ -14,11 +14,20 @@ function createBlacklistStore(databasePath = process.env.DATABASE_PATH || 'data/
       guild_id TEXT NOT NULL,
       user_id TEXT NOT NULL,
       reason TEXT NOT NULL DEFAULT '',
+      proof_url TEXT NOT NULL DEFAULT '',
+      proof_image_url TEXT NOT NULL DEFAULT '',
+      proof_image_type TEXT NOT NULL DEFAULT '',
       created_by TEXT NOT NULL,
       created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
       PRIMARY KEY (guild_id, user_id)
     )
   `);
+  const columns = new Set(database.pragma('table_info(blacklist)').map((column) => column.name));
+  for (const column of ['proof_url', 'proof_image_url', 'proof_image_type']) {
+    if (!columns.has(column)) {
+      database.exec(`ALTER TABLE blacklist ADD COLUMN ${column} TEXT NOT NULL DEFAULT ''`);
+    }
+  }
   database.exec(`
     CREATE TABLE IF NOT EXISTS managed_blacklist_bans (
       target_guild_id TEXT NOT NULL,
@@ -30,20 +39,21 @@ function createBlacklistStore(databasePath = process.env.DATABASE_PATH || 'data/
   `);
 
   const addEntry = database.prepare(`
-    INSERT OR IGNORE INTO blacklist (guild_id, user_id, reason, created_by)
-    VALUES (?, ?, ?, ?)
+    INSERT OR IGNORE INTO blacklist (
+      guild_id, user_id, reason, proof_url, proof_image_url, proof_image_type, created_by
+    ) VALUES (?, ?, ?, ?, ?, ?, ?)
   `);
   const getEntry = database.prepare(
-    'SELECT guild_id, user_id, reason, created_by, created_at FROM blacklist WHERE guild_id = ? AND user_id = ?',
+    'SELECT guild_id, user_id, reason, proof_url, proof_image_url, proof_image_type, created_by, created_at FROM blacklist WHERE guild_id = ? AND user_id = ?',
   );
   const removeEntry = database.prepare(
     'DELETE FROM blacklist WHERE guild_id = ? AND user_id = ?',
   );
   const listEntries = database.prepare(
-    'SELECT guild_id, user_id, reason, created_by, created_at FROM blacklist WHERE guild_id = ? ORDER BY created_at DESC, user_id ASC',
+    'SELECT guild_id, user_id, reason, proof_url, proof_image_url, proof_image_type, created_by, created_at FROM blacklist WHERE guild_id = ? ORDER BY created_at DESC, user_id ASC',
   );
   const listAllEntries = database.prepare(
-    'SELECT guild_id, user_id, reason, created_by, created_at FROM blacklist ORDER BY created_at DESC, guild_id ASC, user_id ASC',
+    'SELECT guild_id, user_id, reason, proof_url, proof_image_url, proof_image_type, created_by, created_at FROM blacklist ORDER BY created_at DESC, guild_id ASC, user_id ASC',
   );
   const listManagedBans = database.prepare(
     'SELECT target_guild_id, source_guild_id, user_id FROM managed_blacklist_bans WHERE target_guild_id = ? AND source_guild_id = ?',
@@ -57,8 +67,16 @@ function createBlacklistStore(databasePath = process.env.DATABASE_PATH || 'data/
   );
 
   return {
-    add(guildId, userId, reason, createdBy) {
-      return addEntry.run(guildId, userId, reason, createdBy).changes === 1;
+    add(guildId, userId, reason, createdBy, proofUrl = '', proofImageUrl = '', proofImageType = '') {
+      return addEntry.run(
+        guildId,
+        userId,
+        reason,
+        proofUrl,
+        proofImageUrl,
+        proofImageType,
+        createdBy,
+      ).changes === 1;
     },
     get: (guildId, userId) => getEntry.get(guildId, userId),
     remove: (guildId, userId) => removeEntry.run(guildId, userId).changes === 1,

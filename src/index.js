@@ -13,6 +13,7 @@ const { enforceBlacklist } = require('./blacklist-enforcement');
 const { sendBlacklistNotice } = require('./blacklist-notifications');
 const { resolveGuildName } = require('./source-guild-name');
 const { createPagesPublisher } = require('./pages-publisher');
+const { normalizeHttpUrl } = require('./url-validation');
 
 const { DISCORD_TOKEN } = process.env;
 const blacklistAdminIds = parseAdminIds(process.env.BLACKLIST_ADMIN_IDS);
@@ -168,13 +169,28 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
       if (subcommand === 'add') {
         const reason = interaction.options.getString('reason')?.trim() ?? '';
+        const proofUrlInput = interaction.options.getString('proof_url')?.trim() ?? '';
+        const proofUrl = normalizeHttpUrl(proofUrlInput);
+        const proofImage = interaction.options.getAttachment('proof_image');
+        if (proofUrlInput && !proofUrl) {
+          await interaction.reply({ content: 'Proof links must use a valid http:// or https:// URL.', ephemeral: true });
+          return;
+        }
         if (store.get(blacklistSourceGuildId, userId)) {
           await interaction.reply({ content: `<@${userId}> is already on this server's blacklist.`, ephemeral: true });
           return;
         }
 
         await interaction.deferReply({ ephemeral: true });
-        store.add(blacklistSourceGuildId, userId, reason, interaction.user.id);
+        store.add(
+          blacklistSourceGuildId,
+          userId,
+          reason,
+          interaction.user.id,
+          proofUrl,
+          proofImage?.url ?? '',
+          proofImage?.contentType ?? '',
+        );
         await sendBlacklistNotice(client, userId, interaction.guild, reason);
         try {
           await interaction.guild.members.ban(userId, { reason: reasonForBan(reason, interaction.user.id) });

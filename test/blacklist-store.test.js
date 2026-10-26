@@ -7,6 +7,7 @@ const { sendBlacklistNotice } = require('../src/blacklist-notifications');
 const { resolveGuildName } = require('../src/source-guild-name');
 const { createCommands } = require('../src/commands');
 const { createPagesPublisher } = require('../src/pages-publisher');
+const { normalizeHttpUrl } = require('../src/url-validation');
 
 test('admin ID configuration trims values and ignores empty entries', () => {
   const adminIds = parseAdminIds(' 123, ,456,123 ');
@@ -41,6 +42,13 @@ test('blacklist entries are unique per user and server', () => {
   } finally {
     store.close();
   }
+});
+
+test('blacklist proof URLs only allow HTTP and HTTPS protocols', () => {
+  assert.equal(normalizeHttpUrl('https://evidence.example/image.png'), 'https://evidence.example/image.png');
+  assert.equal(normalizeHttpUrl('http://evidence.example/case'), 'http://evidence.example/case');
+  assert.equal(normalizeHttpUrl('javascript:alert(1)'), '');
+  assert.equal(normalizeHttpUrl('not a url'), '');
 });
 
 test('deep search bans every blacklist ID and skips users already banned', async () => {
@@ -230,6 +238,9 @@ test('slash-command descriptions use Relay. Blacklists and stay within Discord l
   assert.equal(deepSearch.description, 'Ban users in Relay. Blacklists');
   assert.ok(commands.every((command) => command.description.length <= 100));
   assert.ok(blacklist.options.every((option) => option.description.length <= 100));
+  const add = blacklist.options.find((option) => option.name === 'add');
+  assert.ok(add.options.some((option) => option.name === 'proof_url' && option.required === false));
+  assert.ok(add.options.some((option) => option.name === 'proof_image' && option.required === false));
 });
 
 test('Pages publisher writes only public IDs and dates to the repository snapshot', async () => {
@@ -249,7 +260,10 @@ test('Pages publisher writes only public IDs and dates to the repository snapsho
   const published = await publisher.publish([{
     user_id: '123456789012345678',
     created_at: '2026-10-26 12:00:00',
-    reason: 'private reason',
+    reason: 'Public reason',
+    proof_url: 'https://evidence.example/case',
+    proof_image_url: 'https://cdn.example/proof.png',
+    proof_image_type: 'image/png',
     created_by: 'moderator-id',
     guild_id: 'source-guild',
   }], 'Relay. Blacklists');
@@ -258,8 +272,14 @@ test('Pages publisher writes only public IDs and dates to the repository snapsho
   const snapshot = JSON.parse(Buffer.from(requestBody.content, 'base64').toString('utf8'));
   assert.equal(published, true);
   assert.equal(snapshot.sourceGuildName, 'Relay. Blacklists');
-  assert.deepEqual(snapshot.entries, [{ userId: '123456789012345678', addedAt: '2026-10-26 12:00:00' }]);
-  assert.equal(JSON.stringify(snapshot).includes('private reason'), false);
+  assert.deepEqual(snapshot.entries, [{
+    userId: '123456789012345678',
+    addedAt: '2026-10-26 12:00:00',
+    reason: 'Public reason',
+    proofUrl: 'https://evidence.example/case',
+    proofImageUrl: 'https://cdn.example/proof.png',
+    proofImageType: 'image/png',
+  }]);
   assert.equal(JSON.stringify(snapshot).includes('moderator-id'), false);
   assert.equal(requests[1].options.headers.Authorization, 'Bearer test-token');
 });

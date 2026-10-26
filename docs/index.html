@@ -51,8 +51,8 @@
           <div class="toolbar">
             <label class="search-box">
               <span class="search-icon" aria-hidden="true"></span>
-              <span class="visually-hidden">Search user IDs</span>
-              <input id="search" type="search" placeholder="Search by Discord user ID" autocomplete="off" spellcheck="false">
+              <span class="visually-hidden">Search blacklist entries</span>
+              <input id="search" type="search" placeholder="Search IDs, reasons, or proof links" autocomplete="off" spellcheck="false">
               <kbd>/</kbd>
             </label>
             <button class="refresh-button" id="refresh" type="button" aria-label="Refresh blacklist" title="Refresh blacklist">
@@ -61,15 +61,8 @@
             </button>
           </div>
 
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr><th scope="col">DISCORD USER ID</th><th scope="col">DATE ADDED</th><th scope="col">STATUS</th></tr>
-              </thead>
-              <tbody id="entries">
-                <tr><td colspan="3" class="table-state">Loading register...</td></tr>
-              </tbody>
-            </table>
+          <div id="entries" class="entry-grid" aria-live="polite">
+            <div class="empty-state">Loading register...</div>
           </div>
           <div class="registry-foot">
             <span id="result-count">Loading entries</span>
@@ -81,7 +74,7 @@
 
       <footer class="footer">
         <span>RELAY. BLACKLISTS <span class="footer-separator">/</span> PUBLIC INDEX</span>
-        <span>User IDs and dates only. No reasons or moderator details are published.</span>
+        <span>Reasons and evidence are public. Do not include private or sensitive information.</span>
       </footer>
     </div>
   </body>

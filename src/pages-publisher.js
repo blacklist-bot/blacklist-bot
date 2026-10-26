@@ -1,5 +1,6 @@
 const DEFAULT_REPOSITORY = 'blacklist-bot/blacklist-bot';
 const DATA_PATH = 'docs/blacklist-data.json';
+const { normalizeHttpUrl } = require('./url-validation');
 
 function createPagesPublisher({
   token = process.env.GITHUB_PAGES_TOKEN || process.env.GITHUB_TOKEN || process.env.GH_TOKEN,
@@ -31,7 +32,14 @@ function createPagesPublisher({
       generatedAt: new Date().toISOString(),
       entries: entries
         .filter((entry) => /^\d{17,20}$/.test(entry.user_id))
-        .map((entry) => ({ userId: entry.user_id, addedAt: entry.created_at })),
+        .map((entry) => ({
+          userId: entry.user_id,
+          addedAt: entry.created_at,
+          reason: String(entry.reason || '').slice(0, 400),
+          proofUrl: normalizeHttpUrl(entry.proof_url),
+          proofImageUrl: normalizeHttpUrl(entry.proof_image_url),
+          proofImageType: String(entry.proof_image_type || '').slice(0, 100),
+        })),
     };
 
     try {

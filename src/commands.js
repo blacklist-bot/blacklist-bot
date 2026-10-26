@@ -27,6 +27,19 @@ function createCommands() {
               .setDescription('Reason for the blacklist')
               .setMaxLength(400)
               .setRequired(false),
+          )
+          .addStringOption((option) =>
+            option
+              .setName('proof_url')
+              .setDescription('Public link to evidence or an image')
+              .setMaxLength(500)
+              .setRequired(false),
+          )
+          .addAttachmentOption((option) =>
+            option
+              .setName('proof_image')
+              .setDescription('Upload an evidence image')
+              .setRequired(false),
           ),
       )
       .addSubcommand((subcommand) =>

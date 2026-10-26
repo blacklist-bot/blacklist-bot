@@ -4,7 +4,11 @@
   "entries": [
     {
       "userId": "1397177059524214835",
-      "addedAt": "2026-10-26 20:41:34"
+      "addedAt": "2026-10-26 20:41:34",
+      "reason": "",
+      "proofUrl": "",
+      "proofImageUrl": "",
+      "proofImageType": ""
     }
   ]
 }

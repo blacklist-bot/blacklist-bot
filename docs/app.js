@@ -16,49 +16,117 @@ function formatDate(value) {
   return new Intl.DateTimeFormat(undefined, { year: 'numeric', month: 'short', day: '2-digit' }).format(date);
 }
 
-function setCellText(row, text, className) {
-  const cell = document.createElement('td');
-  if (className) cell.className = className;
-  cell.textContent = text;
-  row.append(cell);
-  return cell;
+function safeHttpUrl(value) {
+  try {
+    const url = new URL(value);
+    return url.protocol === 'https:' || url.protocol === 'http:' ? url : null;
+  } catch {
+    return null;
+  }
+}
+
+function makeLink(url, label) {
+  const safeUrl = safeHttpUrl(url);
+  if (!safeUrl) return null;
+
+  const link = document.createElement('a');
+  link.href = safeUrl.href;
+  link.target = '_blank';
+  link.rel = 'noopener noreferrer';
+  link.textContent = label;
+  return link;
+}
+
+function makeEntryCard(entry, index) {
+  const card = document.createElement('article');
+  card.className = 'entry-card';
+
+  const top = document.createElement('div');
+  top.className = 'card-top';
+  const identity = document.createElement('div');
+  identity.className = 'card-identity';
+  const label = document.createElement('span');
+  label.className = 'card-index';
+  label.textContent = `ENTRY ${String(index + 1).padStart(3, '0')}`;
+  const userLink = makeLink(`https://discord.com/users/${entry.userId}`, entry.userId);
+  userLink.className = 'user-id';
+  identity.append(label, userLink);
+  const status = document.createElement('span');
+  status.className = 'status-tag';
+  status.textContent = 'Listed';
+  top.append(identity, status);
+  card.append(top);
+
+  const date = document.createElement('p');
+  date.className = 'card-date';
+  date.textContent = `ADDED ${formatDate(entry.addedAt)}`;
+  card.append(date);
+
+  const reasonBlock = document.createElement('section');
+  reasonBlock.className = 'card-section';
+  const reasonLabel = document.createElement('h3');
+  reasonLabel.textContent = 'Reason';
+  const reason = document.createElement('p');
+  reason.className = 'reason-copy';
+  reason.textContent = entry.reason || 'No reason provided.';
+  reasonBlock.append(reasonLabel, reason);
+  card.append(reasonBlock);
+
+  const evidence = document.createElement('section');
+  evidence.className = 'card-section evidence-section';
+  const evidenceLabel = document.createElement('h3');
+  evidenceLabel.textContent = 'Proof';
+  const evidenceItems = document.createElement('div');
+  evidenceItems.className = 'evidence-items';
+  const proofLink = makeLink(entry.proofUrl, 'Open evidence link');
+  if (proofLink) evidenceItems.append(proofLink);
+
+  const imageUrl = safeHttpUrl(entry.proofImageUrl);
+  const imageHostAllowed = imageUrl && ['cdn.discordapp.com', 'media.discordapp.net'].includes(imageUrl.hostname);
+  if (imageHostAllowed && typeof entry.proofImageType === 'string' && entry.proofImageType.startsWith('image/')) {
+    const imageLink = makeLink(imageUrl.href, 'Open uploaded image');
+    const image = document.createElement('img');
+    image.className = 'proof-image';
+    image.src = imageUrl.href;
+    image.alt = 'Uploaded blacklist evidence';
+    image.loading = 'lazy';
+    image.referrerPolicy = 'no-referrer';
+    imageLink.className = 'image-proof-link';
+    imageLink.append(image);
+    evidenceItems.append(imageLink);
+  } else if (entry.proofImageUrl) {
+    const imageLink = makeLink(entry.proofImageUrl, 'Open uploaded evidence');
+    if (imageLink) evidenceItems.append(imageLink);
+  }
+
+  if (!evidenceItems.childElementCount) {
+    const none = document.createElement('span');
+    none.className = 'no-proof';
+    none.textContent = 'No proof attached.';
+    evidenceItems.append(none);
+  }
+  evidence.append(evidenceLabel, evidenceItems);
+  card.append(evidence);
+  return card;
 }
 
 function render() {
   const query = searchElement.value.trim().toLowerCase();
-  const visibleEntries = entries.filter((entry) => entry.userId.toLowerCase().includes(query));
+  const visibleEntries = entries.filter((entry) => [entry.userId, entry.reason, entry.proofUrl]
+    .some((value) => value.toLowerCase().includes(query)));
   entriesElement.replaceChildren();
   countElement.textContent = String(entries.length).padStart(2, '0');
   resultCountElement.textContent = `${visibleEntries.length} ${visibleEntries.length === 1 ? 'ENTRY' : 'ENTRIES'} SHOWN`;
 
   if (visibleEntries.length === 0) {
-    const row = document.createElement('tr');
-    const cell = setCellText(row, entries.length === 0 ? 'No blacklist entries published.' : 'No matching user IDs.', 'table-state');
-    cell.colSpan = 3;
-    entriesElement.append(row);
+    const empty = document.createElement('div');
+    empty.className = 'empty-state';
+    empty.textContent = entries.length === 0 ? 'No blacklist entries published.' : 'No matching entries.';
+    entriesElement.append(empty);
     return;
   }
 
-  for (const entry of visibleEntries) {
-    const row = document.createElement('tr');
-    const userCell = document.createElement('td');
-    const userLink = document.createElement('a');
-    userLink.className = 'user-link';
-    userLink.href = `https://discord.com/users/${encodeURIComponent(entry.userId)}`;
-    userLink.target = '_blank';
-    userLink.rel = 'noopener noreferrer';
-    userLink.textContent = entry.userId;
-    userCell.append(userLink);
-    row.append(userCell);
-    setCellText(row, formatDate(entry.addedAt));
-    const statusCell = document.createElement('td');
-    const status = document.createElement('span');
-    status.className = 'status-tag';
-    status.textContent = 'Listed';
-    statusCell.append(status);
-    row.append(statusCell);
-    entriesElement.append(row);
-  }
+  visibleEntries.forEach((entry, index) => entriesElement.append(makeEntryCard(entry, index)));
 }
 
 async function loadBlacklist() {
@@ -70,6 +138,13 @@ async function loadBlacklist() {
     const data = await response.json();
     entries = Array.isArray(data.entries)
       ? data.entries.filter((entry) => /^\d{17,20}$/.test(entry.userId) && typeof entry.addedAt === 'string')
+        .map((entry) => ({
+          ...entry,
+          reason: typeof entry.reason === 'string' ? entry.reason.slice(0, 400) : '',
+          proofUrl: safeHttpUrl(entry.proofUrl)?.href || '',
+          proofImageUrl: safeHttpUrl(entry.proofImageUrl)?.href || '',
+          proofImageType: typeof entry.proofImageType === 'string' ? entry.proofImageType : '',
+        }))
       : [];
     sourceElement.textContent = data.sourceGuildName || 'SOURCE REGISTER';
     updatedElement.textContent = data.generatedAt ? formatDate(data.generatedAt) : 'Waiting for first sync';
@@ -79,10 +154,10 @@ async function loadBlacklist() {
     errorElement.textContent = 'Could not load the public blacklist data. Try refreshing in a moment.';
     errorElement.hidden = false;
     entriesElement.replaceChildren();
-    const row = document.createElement('tr');
-    const cell = setCellText(row, 'Register unavailable.', 'table-state');
-    cell.colSpan = 3;
-    entriesElement.append(row);
+    const empty = document.createElement('div');
+    empty.className = 'empty-state';
+    empty.textContent = 'Register unavailable.';
+    entriesElement.append(empty);
     resultCountElement.textContent = 'DATA UNAVAILABLE';
   } finally {
     refreshButton.disabled = false;
