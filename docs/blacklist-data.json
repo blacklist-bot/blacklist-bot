@@ -1,7 +1,16 @@
 {
   "sourceGuildName": "Relay. Blacklists",
-  "generatedAt": "2026-10-26T21:44:43.928Z",
+  "generatedAt": "2026-10-26T21:45:55.965Z",
   "entries": [
+    {
+      "userId": "1397177059524214835",
+      "username": "harleyc_15",
+      "addedAt": "2026-10-26 21:45:54",
+      "reason": "Racism, CSAM(Child Sexual Abuse Matrial), Doxxing, Raiding, NSFW.",
+      "proofUrl": "https://docs.google.com/document/d/19_RLiFRG-vJz_O2TVgmR-z-EIzaugujcfBuFbWJ13JE/edit?usp=sharing",
+      "proofImageUrl": "",
+      "proofImageType": ""
+    },
     {
       "userId": "1309040895009620060",
       "username": "randomannoyingperson2011",
