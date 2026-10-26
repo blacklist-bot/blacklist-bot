@@ -46,6 +46,19 @@ async function getBlacklistSourceName() {
 }
 
 async function syncPublicBlacklist() {
+  const entries = store.list(blacklistSourceGuildId);
+  for (const entry of entries) {
+    if (entry.username) continue;
+
+    try {
+      const user = await client.users.fetch(entry.user_id);
+      const username = user.username?.slice(0, 100) ?? '';
+      if (username) store.updateUsername(blacklistSourceGuildId, entry.user_id, username);
+    } catch (error) {
+      console.warn(`Could not resolve username for blacklist user ${entry.user_id}:`, error.message);
+    }
+  }
+
   const sourceName = await getBlacklistSourceName();
   return pagesPublisher.publish(store.list(blacklistSourceGuildId), sourceName);
 }
@@ -182,6 +195,12 @@ client.on(Events.InteractionCreate, async (interaction) => {
         }
 
         await interaction.deferReply({ ephemeral: true });
+        let username = '';
+        try {
+          username = (await client.users.fetch(userId)).username?.slice(0, 100) ?? '';
+        } catch (error) {
+          console.warn(`Could not resolve username for blacklist user ${userId}:`, error.message);
+        }
         store.add(
           blacklistSourceGuildId,
           userId,
@@ -190,6 +209,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
           proofUrl,
           proofImage?.url ?? '',
           proofImage?.contentType ?? '',
+          username,
         );
         await sendBlacklistNotice(client, userId, interaction.guild, reason);
         try {

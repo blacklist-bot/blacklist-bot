@@ -34,6 +34,7 @@ function createPagesPublisher({
         .filter((entry) => /^\d{17,20}$/.test(entry.user_id))
         .map((entry) => ({
           userId: entry.user_id,
+          username: String(entry.username || '').slice(0, 100),
           addedAt: entry.created_at,
           reason: String(entry.reason || '').slice(0, 400),
           proofUrl: normalizeHttpUrl(entry.proof_url),

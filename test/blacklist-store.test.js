@@ -21,10 +21,11 @@ test('blacklist entries are unique per user and server', () => {
   const store = createBlacklistStore(':memory:');
 
   try {
-    assert.equal(store.add('guild-a', 'user-1', 'reason', 'mod-1'), true);
+    assert.equal(store.add('guild-a', 'user-1', 'reason', 'mod-1', '', '', '', 'relayuser'), true);
     assert.equal(store.add('guild-a', 'user-1', 'duplicate', 'mod-2'), false);
     assert.equal(store.add('guild-b', 'user-1', '', 'mod-2'), true);
     assert.equal(store.get('guild-a', 'user-1').reason, 'reason');
+    assert.equal(store.get('guild-a', 'user-1').username, 'relayuser');
     assert.equal(store.list('guild-a').length, 1);
     assert.deepEqual(
       store.listAll().map((entry) => entry.guild_id),
@@ -259,6 +260,7 @@ test('Pages publisher writes only public IDs and dates to the repository snapsho
 
   const published = await publisher.publish([{
     user_id: '123456789012345678',
+    username: 'relayuser',
     created_at: '2026-10-26 12:00:00',
     reason: 'Public reason',
     proof_url: 'https://evidence.example/case',
@@ -274,6 +276,7 @@ test('Pages publisher writes only public IDs and dates to the repository snapsho
   assert.equal(snapshot.sourceGuildName, 'Relay. Blacklists');
   assert.deepEqual(snapshot.entries, [{
     userId: '123456789012345678',
+    username: 'relayuser',
     addedAt: '2026-10-26 12:00:00',
     reason: 'Public reason',
     proofUrl: 'https://evidence.example/case',

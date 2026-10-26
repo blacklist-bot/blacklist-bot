@@ -78,6 +78,7 @@ kbd { padding: 2px 6px; border: 1px solid var(--line); color: var(--subtle); fon
 .card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
 .card-identity { min-width: 0; display: flex; flex-direction: column; gap: 8px; }
 .card-index, .card-date { color: var(--subtle); font-family: var(--mono); font-size: 9px; letter-spacing: .05em; }
+.card-username { overflow-wrap: anywhere; color: var(--text); font-size: 17px; font-weight: 600; }
 .user-id { overflow-wrap: anywhere; color: var(--text); font-family: var(--mono); font-size: 14px; text-decoration-color: var(--line); text-underline-offset: 3px; }
 .user-id:hover { color: var(--accent); text-decoration-color: var(--accent); }
 .status-tag { display: inline-flex; align-items: center; gap: 7px; color: var(--accent-soft); font-family: var(--mono); font-size: 9px; text-transform: uppercase; }
@@ -123,6 +124,7 @@ kbd { padding: 2px 6px; border: 1px solid var(--line); color: var(--subtle); fon
   .refresh-button span { display: none; }
   .entry-grid { grid-template-columns: 1fr; gap: 10px; }
   .entry-card { padding: 15px; }
+  .card-username { font-size: 15px; }
   .user-id { font-size: 12px; }
   .status-tag { font-size: 8px; }
   .footer { flex-direction: column; gap: 5px; }

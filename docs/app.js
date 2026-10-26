@@ -48,9 +48,12 @@ function makeEntryCard(entry, index) {
   const label = document.createElement('span');
   label.className = 'card-index';
   label.textContent = `ENTRY ${String(index + 1).padStart(3, '0')}`;
+  const username = document.createElement('span');
+  username.className = 'card-username';
+  username.textContent = entry.username || 'Username unavailable';
   const userLink = makeLink(`https://discord.com/users/${entry.userId}`, entry.userId);
   userLink.className = 'user-id';
-  identity.append(label, userLink);
+  identity.append(label, username, userLink);
   const status = document.createElement('span');
   status.className = 'status-tag';
   status.textContent = 'Listed';
@@ -112,7 +115,7 @@ function makeEntryCard(entry, index) {
 
 function render() {
   const query = searchElement.value.trim().toLowerCase();
-  const visibleEntries = entries.filter((entry) => [entry.userId, entry.reason, entry.proofUrl]
+  const visibleEntries = entries.filter((entry) => [entry.userId, entry.username, entry.reason, entry.proofUrl]
     .some((value) => value.toLowerCase().includes(query)));
   entriesElement.replaceChildren();
   countElement.textContent = String(entries.length).padStart(2, '0');
@@ -140,6 +143,7 @@ async function loadBlacklist() {
       ? data.entries.filter((entry) => /^\d{17,20}$/.test(entry.userId) && typeof entry.addedAt === 'string')
         .map((entry) => ({
           ...entry,
+          username: typeof entry.username === 'string' ? entry.username.slice(0, 100) : '',
           reason: typeof entry.reason === 'string' ? entry.reason.slice(0, 400) : '',
           proofUrl: safeHttpUrl(entry.proofUrl)?.href || '',
           proofImageUrl: safeHttpUrl(entry.proofImageUrl)?.href || '',
