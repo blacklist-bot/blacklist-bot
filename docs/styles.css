@@ -39,6 +39,11 @@ a { color: inherit; }
 .wordmark-mark { color: var(--accent); font-family: var(--display); font-size: 29px; font-style: italic; line-height: 1; }
 .wordmark-dot { color: var(--accent); }
 .wordmark-sub { color: var(--muted); font-size: 11px; font-weight: 500; }
+.header-actions { display: flex; align-items: center; gap: 20px; }
+.invite-button { min-height: 36px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 0 11px; border: 1px solid var(--accent); color: var(--accent-soft); background: transparent; font-size: 11px; font-weight: 600; text-decoration: none; white-space: nowrap; transition: background-color .15s ease, color .15s ease; }
+.invite-button:hover { color: var(--background); background: var(--accent); }
+.invite-button:focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 3px; }
+.invite-button svg { width: 15px; height: 15px; flex: 0 0 15px; fill: none; stroke: currentColor; stroke-linecap: round; stroke-width: 1.8; }
 .live-indicator, .eyebrow, .summary-label, .updated-label, .section-index, th, .registry-foot, .footer { font-family: var(--mono); letter-spacing: .04em; }
 .live-indicator { display: flex; align-items: center; gap: 9px; color: var(--muted); font-size: 10px; }
 .live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--status); }
@@ -107,7 +112,11 @@ kbd { padding: 2px 6px; border: 1px solid var(--line); color: var(--subtle); fon
 
 @media (max-width: 680px) {
   .site-frame { width: min(100% - 36px, 520px); }
-  .topbar { height: 72px; }
+  .topbar { min-height: 72px; height: auto; gap: 10px; }
+  .header-actions { gap: 0; }
+  .invite-button { min-height: 34px; gap: 6px; padding: 0 8px; font-size: 10px; }
+  .invite-button svg { width: 13px; height: 13px; flex-basis: 13px; }
+  .live-indicator { display: none; }
   .intro { min-height: 0; grid-template-columns: 1fr; gap: 27px; padding: 43px 0 30px; }
   .eyebrow { flex-wrap: wrap; font-size: 9px; }
   h1 { font-size: clamp(46px, 13vw, 60px); }
