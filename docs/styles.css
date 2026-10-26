@@ -8,8 +8,8 @@
   --text: #eee8dd;
   --muted: #b4aa9d;
   --subtle: #82776b;
-  --accent: #c57655;
-  --accent-soft: #e7ae96;
+  --accent: #91a778;
+  --accent-soft: #bdcba8;
   --status: #aab58a;
   --danger: #df7968;
   --mono: "DM Mono", "SFMono-Regular", Consolas, monospace;
@@ -76,8 +76,8 @@ kbd { padding: 2px 6px; border: 1px solid var(--line); color: var(--subtle); fon
 .refresh-button svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.6; }
 
 .entry-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-.entry-card { min-width: 0; padding: 18px; border: 1px solid var(--line); border-left: 2px solid #79513f; border-radius: 2px; background: var(--surface); transition: border-color .16s ease; }
-.entry-card:hover { border-color: #6a594d; border-left-color: var(--accent); }
+.entry-card { min-width: 0; padding: 18px; border: 1px solid var(--line); border-left: 2px solid #56654a; border-radius: 2px; background: var(--surface); transition: border-color .16s ease; }
+.entry-card:hover { border-color: #59624f; border-left-color: var(--accent); }
 .card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
 .card-identity { min-width: 0; display: flex; flex-direction: column; gap: 8px; }
 .card-index, .card-date { color: var(--subtle); font-family: var(--mono); font-size: 9px; letter-spacing: .05em; }
