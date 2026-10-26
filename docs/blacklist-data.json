@@ -1,7 +1,11 @@
 {
   "sourceGuildName": "Relay. Blacklists",
-  "generatedAt": "2026-10-26T21:07:40.145Z",
+  "generatedAt": "2026-10-26T21:11:04.908Z",
   "entries": [
+    {
+      "userId": "1309040895009620060",
+      "addedAt": "2026-10-26 21:11:00"
+    },
     {
       "userId": "1397177059524214835",
       "addedAt": "2026-10-26 20:41:34"
