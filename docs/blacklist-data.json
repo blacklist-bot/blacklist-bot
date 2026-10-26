@@ -1,6 +1,6 @@
 {
   "sourceGuildName": "Relay. Blacklists",
-  "generatedAt": "2026-10-26T21:45:55.965Z",
+  "generatedAt": "2026-10-26T21:57:34.664Z",
   "entries": [
     {
       "userId": "1397177059524214835",
@@ -10,15 +10,6 @@
       "proofUrl": "https://docs.google.com/document/d/19_RLiFRG-vJz_O2TVgmR-z-EIzaugujcfBuFbWJ13JE/edit?usp=sharing",
       "proofImageUrl": "",
       "proofImageType": ""
-    },
-    {
-      "userId": "1309040895009620060",
-      "username": "randomannoyingperson2011",
-      "addedAt": "2026-10-26 21:26:40",
-      "reason": "meow",
-      "proofUrl": "",
-      "proofImageUrl": "https://cdn.discordapp.com/ephemeral-attachments/1564349510342418655/1564389829054169188/images.png?ex=6ae11710&is=6adfc590&hm=fb00bbbe3970fa47be7c431010b91a5e65e96fb14a48e56fc3db84591e83df03&",
-      "proofImageType": "image/png"
     }
   ]
 }
