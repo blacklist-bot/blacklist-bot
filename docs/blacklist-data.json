@@ -1,7 +1,16 @@
 {
   "sourceGuildName": "Relay. Blacklists",
-  "generatedAt": "2026-10-27T09:13:27.526Z",
+  "generatedAt": "2026-10-27T09:21:57.491Z",
   "entries": [
+    {
+      "userId": "1309040895009620060",
+      "username": "randomannoyingperson2011",
+      "addedAt": "2026-10-27 09:21:56",
+      "reason": "test",
+      "proofUrl": "",
+      "proofImageUrl": "",
+      "proofImageType": ""
+    },
     {
       "userId": "1397177059524214835",
       "username": "harleyc_15",
