@@ -186,7 +186,6 @@ reportForm.addEventListener('submit', async (event) => {
 
   const formData = new FormData(reportForm);
   const userId = String(formData.get('userId') || '').trim();
-  const discordUsername = String(formData.get('discordUsername') || '').trim();
   const reason = String(formData.get('reason') || '').trim();
   const proofUrl = String(formData.get('proofUrl') || '').trim();
   const image = formData.get('proofImage');
@@ -194,10 +193,6 @@ reportForm.addEventListener('submit', async (event) => {
 
   if (!/^\d{17,20}$/.test(userId)) {
     reportStatus.textContent = 'Enter a valid Discord user ID.';
-    return;
-  }
-  if (discordUsername.length < 2 || discordUsername.length > 100) {
-    reportStatus.textContent = 'Enter a Discord username between 2 and 100 characters.';
     return;
   }
   if (reason.length < 5 || reason.length > 1000) {
@@ -238,7 +233,7 @@ reportForm.addEventListener('submit', async (event) => {
     const response = await fetch(window.REPORT_API_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId, discordUsername, reason, proofUrl, proofImage, website: formData.get('website') }),
+      body: JSON.stringify({ userId, reason, proofUrl, proofImage, website: formData.get('website') }),
     });
     const result = await response.json();
     if (!response.ok) throw new Error(result.error || 'Report could not be sent.');

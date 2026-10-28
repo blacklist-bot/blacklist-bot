@@ -98,7 +98,7 @@ function createReportServer({
       }
       report = parseReport({
         ...body,
-        reporterName: body.discordUsername,
+        reporterName: 'Website visitor',
         source: 'Website',
       });
     } catch (error) {

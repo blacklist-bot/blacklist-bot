@@ -20,10 +20,9 @@ function parseReport(input) {
   if (reason.length < 5 || reason.length > 1000) throw new Error('Reason must be between 5 and 1,000 characters.');
   if (proofUrlInput && !proofUrl) throw new Error('Proof URL must use http:// or https://.');
   const source = input.source === 'Discord' ? 'Discord' : 'Website';
-  const reporterName = String(input.reporterName || input.reporterId || '').trim().slice(0, 100);
-  if (source === 'Website' && (reporterName.length < 2 || reporterName.length > 100)) {
-    throw new Error('Enter a Discord username between 2 and 100 characters.');
-  }
+  const reporterName = source === 'Website'
+    ? 'Website visitor'
+    : String(input.reporterName || input.reporterId || 'Discord user').trim().slice(0, 100);
 
   let proofImage = null;
   if (input.proofImage) {
@@ -69,7 +68,7 @@ async function sendReport(webhook, report) {
       { name: 'Reported user ID', value: report.userId },
       { name: 'Reason', value: report.reason.slice(0, 1024) },
       { name: 'Submitted via', value: report.source },
-      { name: 'Reporter (unverified)', value: report.reporterName },
+      { name: 'Reporter', value: report.reporterName },
     )
     .setTimestamp();
 

@@ -125,7 +125,6 @@ test('website report endpoint restricts origins and forwards sanitized reports',
   const body = JSON.stringify({
     userId: '12345678901234567',
     reason: 'Please review this account',
-    discordUsername: 'reporter-name',
     proofUrl: 'https://example.com/evidence',
     reporterName: 'spoofed-moderator',
     source: 'Discord',
@@ -145,17 +144,18 @@ test('website report endpoint restricts origins and forwards sanitized reports',
   });
   assert.equal(accepted.status, 202);
   assert.equal(sentReport.source, 'Website');
-  assert.equal(sentReport.reporterName, 'reporter-name');
+  assert.equal(sentReport.reporterName, 'Website visitor');
   assert.equal(sentReport.userId, '12345678901234567');
 });
 
-test('website reports require a self-reported Discord username', () => {
-  assert.throws(() => parseReport({
+test('website reports use a fixed reporter label without requiring sign-in', () => {
+  const report = parseReport({
     userId: '12345678901234567',
     reason: 'Please review this account',
     proofUrl: 'https://example.com/evidence',
     source: 'Website',
-  }), /Discord username/);
+  });
+  assert.equal(report.reporterName, 'Website visitor');
 });
 
 test('deep search bans every blacklist ID and skips users already banned', async () => {
