@@ -1,7 +1,7 @@
 const assert = require('node:assert/strict');
 const test = require('node:test');
 const { createBlacklistStore } = require('../src/blacklist-store');
-const { parseAdminIds } = require('../src/authorization');
+const { canManageBlacklist, canRunDeepSearch, parseAdminIds } = require('../src/authorization');
 const { enforceBlacklist } = require('../src/blacklist-enforcement');
 const { sendBlacklistNotice } = require('../src/blacklist-notifications');
 const { resolveGuildName } = require('../src/source-guild-name');
@@ -15,6 +15,25 @@ test('admin ID configuration trims values and ignores empty entries', () => {
   assert.deepEqual([...adminIds], ['123', '456']);
   assert.equal(adminIds.has('789'), false);
   assert.deepEqual([...parseAdminIds('')], []);
+});
+
+test('source role and Ban Members permission authorize blacklist changes', () => {
+  const common = {
+    userId: 'user-1',
+    guildId: 'source-guild',
+    sourceGuildId: 'source-guild',
+    adminRoleId: 'blacklist-role',
+  };
+
+  assert.equal(canManageBlacklist({ ...common, roleIds: ['blacklist-role'] }), true);
+  assert.equal(canManageBlacklist({ ...common, roleIds: [], hasBanPermission: true }), true);
+  assert.equal(canManageBlacklist({ ...common, roleIds: [] }), false);
+  assert.equal(canManageBlacklist({ ...common, guildId: 'other-guild', roleIds: ['blacklist-role'] }), false);
+});
+
+test('deep search requires Ban Members permission', () => {
+  assert.equal(canRunDeepSearch(true), true);
+  assert.equal(canRunDeepSearch(false), false);
 });
 
 test('blacklist entries are unique per user and server', () => {

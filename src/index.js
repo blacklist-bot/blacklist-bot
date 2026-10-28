@@ -5,10 +5,11 @@ const {
   EmbedBuilder,
   Events,
   GatewayIntentBits,
+  PermissionFlagsBits,
   WebhookClient,
 } = require('discord.js');
 const { createBlacklistStore } = require('./blacklist-store');
-const { parseAdminIds } = require('./authorization');
+const { canManageBlacklist, canRunDeepSearch, parseAdminIds } = require('./authorization');
 const { enforceBlacklist } = require('./blacklist-enforcement');
 const { sendBlacklistNotice } = require('./blacklist-notifications');
 const { resolveGuildName } = require('./source-guild-name');
@@ -18,6 +19,7 @@ const { normalizeHttpUrl } = require('./url-validation');
 const { DISCORD_TOKEN } = process.env;
 const blacklistAdminIds = parseAdminIds(process.env.BLACKLIST_ADMIN_IDS);
 const blacklistSourceGuildId = process.env.BLACKLIST_SOURCE_GUILD_ID || process.env.DISCORD_GUILD_ID;
+const blacklistAdminRoleId = process.env.BLACKLIST_ADMIN_ROLE_ID || '1564786163401752617';
 const auditWebhook = process.env.BLACKLIST_AUDIT_WEBHOOK_URL
   ? new WebhookClient({ url: process.env.BLACKLIST_AUDIT_WEBHOOK_URL })
   : null;
@@ -122,17 +124,6 @@ client.on(Events.InteractionCreate, async (interaction) => {
   if (
     interaction.commandName === 'blacklist' &&
     ['add', 'remove'].includes(interaction.options.getSubcommand()) &&
-    !blacklistAdminIds.has(interaction.user.id)
-  ) {
-    await interaction.reply({
-      content: 'You are not authorized to manage this server\'s blacklist. Use /deep-search to check a user.',
-      ephemeral: true,
-    });
-    return;
-  }
-  if (
-    interaction.commandName === 'blacklist' &&
-    ['add', 'remove'].includes(interaction.options.getSubcommand()) &&
     interaction.guildId !== blacklistSourceGuildId
   ) {
     const sourceName = await getBlacklistSourceName();
@@ -141,6 +132,41 @@ client.on(Events.InteractionCreate, async (interaction) => {
       ephemeral: true,
     });
     return;
+  }
+  if (
+    interaction.commandName === 'blacklist' &&
+    ['add', 'remove'].includes(interaction.options.getSubcommand())
+  ) {
+    const memberRoles = interaction.member?.roles;
+    const roleIds = Array.isArray(memberRoles)
+      ? memberRoles
+      : [...(memberRoles?.cache?.keys() ?? [])];
+    const hasBanPermission = interaction.memberPermissions?.has(PermissionFlagsBits.BanMembers) ?? false;
+    if (!canManageBlacklist({
+      userId: interaction.user.id,
+      guildId: interaction.guildId,
+      sourceGuildId: blacklistSourceGuildId,
+      roleIds,
+      adminRoleId: blacklistAdminRoleId,
+      hasBanPermission,
+      adminIds: blacklistAdminIds,
+    })) {
+      await interaction.reply({
+        content: `You need the Ban Members permission or the source server's blacklist manager role to add or remove entries.`,
+        ephemeral: true,
+      });
+      return;
+    }
+  }
+  if (interaction.commandName === 'deep-search') {
+    const hasBanPermission = interaction.memberPermissions?.has(PermissionFlagsBits.BanMembers) ?? false;
+    if (!canRunDeepSearch(hasBanPermission)) {
+      await interaction.reply({
+        content: 'You need the Ban Members permission in this server to use deep search.',
+        ephemeral: true,
+      });
+      return;
+    }
   }
 
   try {
