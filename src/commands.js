@@ -78,6 +78,39 @@ function createCommands() {
       .setName('deep-search')
       .setDescription(`Ban users in ${blacklistLabel}`)
       .setDefaultMemberPermissions(null),
+    new SlashCommandBuilder()
+      .setName('report-user')
+      .setDescription('Submit a user report for admin review')
+      .setDefaultMemberPermissions(null)
+      .addStringOption((option) =>
+        option
+          .setName('user_id')
+          .setDescription('Discord user ID to report')
+          .setMinLength(17)
+          .setMaxLength(20)
+          .setRequired(true),
+      )
+      .addStringOption((option) =>
+        option
+          .setName('reason')
+          .setDescription('Why this user should be reviewed')
+          .setMinLength(5)
+          .setMaxLength(1000)
+          .setRequired(true),
+      )
+      .addStringOption((option) =>
+        option
+          .setName('proof_url')
+          .setDescription('Link to evidence (provide this or an image)')
+          .setMaxLength(2000)
+          .setRequired(false),
+      )
+      .addAttachmentOption((option) =>
+        option
+          .setName('proof_image')
+          .setDescription('Evidence image (provide this or a URL)')
+          .setRequired(false),
+      ),
   ].map((command) => command.toJSON());
 }
 

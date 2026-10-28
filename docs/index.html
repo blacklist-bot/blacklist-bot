@@ -9,8 +9,9 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=editorial-sage-invite-20261026">
-    <script src="app.js?v=cards-proof-usernames-20261026" defer></script>
+    <link rel="stylesheet" href="styles.css?v=report-dialog-20261028">
+    <script src="report-config.js?v=report-dialog-20261028" defer></script>
+    <script src="app.js?v=report-username-20261028" defer></script>
   </head>
   <body>
     <div class="site-frame">
@@ -20,6 +21,7 @@
           <span>Relay<span class="wordmark-dot">.</span><br><span class="wordmark-sub">Blacklists</span></span>
         </a>
         <div class="header-actions">
+          <button class="report-button" id="open-report" type="button">Report User</button>
           <a
             class="invite-button"
             href="https://discord.com/oauth2/authorize?client_id=1564341835990568970&amp;permissions=4&amp;scope=bot%20applications.commands"
@@ -27,7 +29,8 @@
             rel="noopener noreferrer"
           >
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
-            <span>Add bot to your server</span>
+            <span class="invite-long">Add bot to your server</span>
+            <span class="invite-short">Add bot</span>
           </a>
           <div class="live-indicator"><span class="live-dot" aria-hidden="true"></span> PUBLIC REGISTER</div>
         </div>
@@ -88,5 +91,44 @@
         <span>Usernames, reasons, and evidence are public. Do not include private or sensitive information.</span>
       </footer>
     </div>
+
+    <dialog class="report-dialog" id="report-dialog" aria-labelledby="report-title">
+      <form class="report-form" id="report-form">
+        <div class="report-dialog-head">
+          <div>
+            <p class="section-index">PRIVATE REVIEW QUEUE</p>
+            <h2 id="report-title">Report a user</h2>
+          </div>
+          <button class="dialog-close" id="close-report" type="button" aria-label="Close report form">×</button>
+        </div>
+        <p class="report-intro">Reports go to the Relay. Blacklists admins for review. A report does not automatically blacklist or ban anyone.</p>
+        <label class="report-field">
+          <span>Discord user ID</span>
+          <input name="userId" type="text" inputmode="numeric" pattern="[0-9]{17,20}" minlength="17" maxlength="20" autocomplete="off" required>
+        </label>
+        <label class="report-field">
+          <span>Your Discord username <span class="field-hint">self-reported, not verified</span></span>
+          <input name="discordUsername" type="text" minlength="2" maxlength="100" autocomplete="nickname" required>
+        </label>
+        <label class="report-field">
+          <span>Reason</span>
+          <textarea name="reason" minlength="5" maxlength="1000" rows="4" required></textarea>
+        </label>
+        <label class="report-field">
+          <span>Proof URL <span class="field-hint">or upload an image</span></span>
+          <input name="proofUrl" type="url" maxlength="2000" placeholder="https://...">
+        </label>
+        <label class="report-field">
+          <span>Proof image <span class="field-hint">PNG, JPEG, GIF, or WebP, max 4 MB</span></span>
+          <input name="proofImage" type="file" accept="image/png,image/jpeg,image/gif,image/webp">
+        </label>
+        <label class="report-trap" aria-hidden="true">Leave this field empty<input name="website" tabindex="-1" autocomplete="off"></label>
+        <p class="report-status" id="report-status" role="status" aria-live="polite"></p>
+        <div class="report-actions">
+          <button class="dialog-cancel" id="cancel-report" type="button">Cancel</button>
+          <button class="dialog-submit" id="submit-report" type="submit">Send report</button>
+        </div>
+      </form>
+    </dialog>
   </body>
 </html>

@@ -1,0 +1,1 @@
+window.REPORT_API_URL = 'https://dark-wraith-6vr9wx7p9r9xhrwrj-3000.app.github.dev/api/reports';

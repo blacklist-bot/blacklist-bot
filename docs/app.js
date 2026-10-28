@@ -6,6 +6,10 @@ const sourceElement = document.querySelector('#source-name');
 const searchElement = document.querySelector('#search');
 const refreshButton = document.querySelector('#refresh');
 const errorElement = document.querySelector('#error');
+const reportDialog = document.querySelector('#report-dialog');
+const reportForm = document.querySelector('#report-form');
+const reportStatus = document.querySelector('#report-status');
+const reportSubmitButton = document.querySelector('#submit-report');
 
 let entries = [];
 
@@ -170,6 +174,83 @@ async function loadBlacklist() {
 
 searchElement.addEventListener('input', render);
 refreshButton.addEventListener('click', loadBlacklist);
+document.querySelector('#open-report').addEventListener('click', () => {
+  reportStatus.textContent = '';
+  reportDialog.showModal();
+});
+document.querySelector('#close-report').addEventListener('click', () => reportDialog.close());
+document.querySelector('#cancel-report').addEventListener('click', () => reportDialog.close());
+reportForm.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  reportStatus.textContent = '';
+
+  const formData = new FormData(reportForm);
+  const userId = String(formData.get('userId') || '').trim();
+  const discordUsername = String(formData.get('discordUsername') || '').trim();
+  const reason = String(formData.get('reason') || '').trim();
+  const proofUrl = String(formData.get('proofUrl') || '').trim();
+  const image = formData.get('proofImage');
+  const hasImage = image instanceof File && image.size > 0;
+
+  if (!/^\d{17,20}$/.test(userId)) {
+    reportStatus.textContent = 'Enter a valid Discord user ID.';
+    return;
+  }
+  if (discordUsername.length < 2 || discordUsername.length > 100) {
+    reportStatus.textContent = 'Enter a Discord username between 2 and 100 characters.';
+    return;
+  }
+  if (reason.length < 5 || reason.length > 1000) {
+    reportStatus.textContent = 'Reason must be between 5 and 1,000 characters.';
+    return;
+  }
+  if (!proofUrl && !hasImage) {
+    reportStatus.textContent = 'Add a proof URL or upload an image.';
+    return;
+  }
+  if (proofUrl && !safeHttpUrl(proofUrl)) {
+    reportStatus.textContent = 'Proof URL must use http:// or https://.';
+    return;
+  }
+  const allowedImageTypes = ['image/png', 'image/jpeg', 'image/gif', 'image/webp'];
+  if (hasImage && (!allowedImageTypes.includes(image.type) || image.size > 4 * 1024 * 1024)) {
+    reportStatus.textContent = 'Choose a PNG, JPEG, GIF, or WebP image smaller than 4 MB.';
+    return;
+  }
+
+  reportSubmitButton.disabled = true;
+  reportStatus.textContent = 'Sending report...';
+  try {
+    let proofImage;
+    if (hasImage) {
+      const dataUrl = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(new Error('Could not read the selected image.'));
+        reader.readAsDataURL(image);
+      });
+      proofImage = {
+        contentType: image.type,
+        dataBase64: String(dataUrl).split(',')[1],
+      };
+    }
+
+    const response = await fetch(window.REPORT_API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, discordUsername, reason, proofUrl, proofImage, website: formData.get('website') }),
+    });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || 'Report could not be sent.');
+
+    reportForm.reset();
+    reportStatus.textContent = 'Report sent to admins for review. No automatic blacklist or ban was applied.';
+  } catch (error) {
+    reportStatus.textContent = error.message || 'Report service is unavailable. Try again later.';
+  } finally {
+    reportSubmitButton.disabled = false;
+  }
+});
 document.addEventListener('keydown', (event) => {
   if (event.key === '/' && document.activeElement !== searchElement) {
     event.preventDefault();

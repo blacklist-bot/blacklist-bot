@@ -15,6 +15,8 @@ const { sendBlacklistNotice } = require('./blacklist-notifications');
 const { resolveGuildName } = require('./source-guild-name');
 const { createPagesPublisher } = require('./pages-publisher');
 const { normalizeHttpUrl } = require('./url-validation');
+const { MAX_IMAGE_BYTES, parseReport, sendReport } = require('./report-webhook');
+const { createReportServer } = require('./report-server');
 
 const { DISCORD_TOKEN } = process.env;
 const blacklistAdminIds = parseAdminIds(process.env.BLACKLIST_ADMIN_IDS);
@@ -22,6 +24,9 @@ const blacklistSourceGuildId = process.env.BLACKLIST_SOURCE_GUILD_ID || process.
 const blacklistAdminRoleId = process.env.BLACKLIST_ADMIN_ROLE_ID || '1564786163401752617';
 const auditWebhook = process.env.BLACKLIST_AUDIT_WEBHOOK_URL
   ? new WebhookClient({ url: process.env.BLACKLIST_AUDIT_WEBHOOK_URL })
+  : null;
+const reportWebhook = process.env.REPORT_WEBHOOK_URL
+  ? new WebhookClient({ url: process.env.REPORT_WEBHOOK_URL })
   : null;
 
 if (!DISCORD_TOKEN) {
@@ -36,6 +41,10 @@ if (!blacklistSourceGuildId) {
 const store = createBlacklistStore();
 const pagesPublisher = createPagesPublisher();
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers] });
+const reportServer = createReportServer({
+  webhook: reportWebhook,
+  allowedOrigin: process.env.REPORT_WEBSITE_ORIGIN || 'https://blacklist-bot.github.io',
+});
 
 function reasonForBan(reason, actorId, sourceGuildId) {
   const detail = reason ? `: ${reason}` : '';
@@ -98,6 +107,11 @@ client.once(Events.ClientReady, (readyClient) => {
   if (!auditWebhook) {
     console.warn('BLACKLIST_AUDIT_WEBHOOK_URL is empty; blacklist audit embeds are disabled.');
   }
+  const reportPort = Number(process.env.REPORT_API_PORT || 3000);
+  reportServer.listen(reportPort, '0.0.0.0', () => {
+    console.log(`Public report endpoint listening on port ${reportPort}`);
+  });
+  if (!reportWebhook) console.warn('REPORT_WEBHOOK_URL is empty; report submissions will return 503.');
   void syncPublicBlacklist();
 });
 
@@ -170,6 +184,45 @@ client.on(Events.InteractionCreate, async (interaction) => {
   }
 
   try {
+    if (interaction.commandName === 'report-user') {
+      if (!reportWebhook) {
+        await interaction.reply({ content: 'User reporting is not configured right now.', ephemeral: true });
+        return;
+      }
+
+      await interaction.deferReply({ ephemeral: true });
+      try {
+        const proofUrl = interaction.options.getString('proof_url')?.trim() ?? '';
+        const attachment = interaction.options.getAttachment('proof_image');
+        let proofImage;
+        if (attachment) {
+          if (attachment.size > MAX_IMAGE_BYTES) throw new Error('Proof images must be smaller than 4 MB.');
+          const imageResponse = await fetch(attachment.url);
+          if (!imageResponse.ok) throw new Error('Could not read the uploaded proof image.');
+          const imageBuffer = Buffer.from(await imageResponse.arrayBuffer());
+          if (imageBuffer.length > MAX_IMAGE_BYTES) throw new Error('Proof images must be smaller than 4 MB.');
+          proofImage = {
+            contentType: attachment.contentType,
+            dataBase64: imageBuffer.toString('base64'),
+          };
+        }
+
+        const report = parseReport({
+          userId: interaction.options.getString('user_id'),
+          reason: interaction.options.getString('reason'),
+          proofUrl,
+          proofImage,
+          reporterId: `${interaction.user.tag} (${interaction.user.id})`,
+          source: 'Discord',
+        });
+        await sendReport(reportWebhook, report);
+        await interaction.editReply('Report sent to admins for review. It does not automatically blacklist or ban the user.');
+      } catch (error) {
+        await interaction.editReply(error.message || 'Could not submit the report.');
+      }
+      return;
+    }
+
     if (interaction.commandName === 'blacklist') {
       const subcommand = interaction.options.getSubcommand();
       if (subcommand === 'list') {

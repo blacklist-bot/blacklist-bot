@@ -8,6 +8,8 @@ const { resolveGuildName } = require('../src/source-guild-name');
 const { createCommands } = require('../src/commands');
 const { createPagesPublisher } = require('../src/pages-publisher');
 const { normalizeHttpUrl } = require('../src/url-validation');
+const { parseReport, sendReport } = require('../src/report-webhook');
+const { createReportServer } = require('../src/report-server');
 
 test('admin ID configuration trims values and ignores empty entries', () => {
   const adminIds = parseAdminIds(' 123, ,456,123 ');
@@ -69,6 +71,91 @@ test('blacklist proof URLs only allow HTTP and HTTPS protocols', () => {
   assert.equal(normalizeHttpUrl('http://evidence.example/case'), 'http://evidence.example/case');
   assert.equal(normalizeHttpUrl('javascript:alert(1)'), '');
   assert.equal(normalizeHttpUrl('not a url'), '');
+});
+
+test('report validation requires a valid ID, reason, and URL or image proof', () => {
+  assert.throws(() => parseReport({ userId: 'bad', reason: 'Reason', proofUrl: 'https://example.com' }), /valid Discord user ID/);
+  assert.throws(() => parseReport({ userId: '12345678901234567', reason: 'x', proofUrl: 'https://example.com' }), /Reason must/);
+  assert.throws(() => parseReport({
+    userId: '12345678901234567',
+    reporterName: 'reporter',
+    reason: 'Valid reason',
+  }), /proof URL or upload/);
+  assert.equal(parseReport({
+    userId: '12345678901234567',
+    reporterName: 'reporter',
+    reason: 'Valid reason',
+    proofUrl: 'https://example.com/report',
+  }).proofUrl, 'https://example.com/report');
+});
+
+test('report webhook includes review fields and image evidence', async () => {
+  let sent;
+  const report = parseReport({
+    userId: '12345678901234567',
+    reason: 'Detailed report reason',
+    proofUrl: 'https://example.com/proof',
+    proofImage: {
+      contentType: 'image/png',
+      dataBase64: Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 1]).toString('base64'),
+    },
+    reporterId: 'moderator-1',
+    source: 'Discord',
+  });
+
+  await sendReport({ send: async (payload) => { sent = payload; } }, report);
+
+  assert.equal(sent.embeds[0].data.title, 'New user report for review');
+  assert.ok(sent.embeds[0].data.fields.some((field) => field.name === 'Reported user ID'));
+  assert.ok(sent.embeds[0].data.fields.some((field) => field.name === 'Proof URL'));
+  assert.equal(sent.files[0].name, 'proof.png');
+});
+
+test('website report endpoint restricts origins and forwards sanitized reports', async (t) => {
+  let sentReport;
+  const server = createReportServer({
+    webhook: {},
+    allowedOrigin: 'https://blacklist-bot.github.io',
+    sendReportFn: async (_webhook, report) => { sentReport = report; },
+    logger: { error() {} },
+  });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  t.after(() => new Promise((resolve) => server.close(resolve)));
+  const endpoint = `http://127.0.0.1:${server.address().port}/api/reports`;
+  const body = JSON.stringify({
+    userId: '12345678901234567',
+    reason: 'Please review this account',
+    discordUsername: 'reporter-name',
+    proofUrl: 'https://example.com/evidence',
+    reporterName: 'spoofed-moderator',
+    source: 'Discord',
+  });
+
+  const blocked = await fetch(endpoint, {
+    method: 'POST',
+    headers: { Origin: 'https://untrusted.example', 'Content-Type': 'application/json' },
+    body,
+  });
+  assert.equal(blocked.status, 403);
+
+  const accepted = await fetch(endpoint, {
+    method: 'POST',
+    headers: { Origin: 'https://blacklist-bot.github.io', 'Content-Type': 'application/json' },
+    body,
+  });
+  assert.equal(accepted.status, 202);
+  assert.equal(sentReport.source, 'Website');
+  assert.equal(sentReport.reporterName, 'reporter-name');
+  assert.equal(sentReport.userId, '12345678901234567');
+});
+
+test('website reports require a self-reported Discord username', () => {
+  assert.throws(() => parseReport({
+    userId: '12345678901234567',
+    reason: 'Please review this account',
+    proofUrl: 'https://example.com/evidence',
+    source: 'Website',
+  }), /Discord username/);
 });
 
 test('deep search bans every blacklist ID and skips users already banned', async () => {
@@ -252,10 +339,15 @@ test('slash-command descriptions use Relay. Blacklists and stay within Discord l
   const commands = createCommands();
   const blacklist = commands.find((command) => command.name === 'blacklist');
   const deepSearch = commands.find((command) => command.name === 'deep-search');
+  const reportUser = commands.find((command) => command.name === 'report-user');
 
   assert.equal(blacklist.description, 'Manage Relay. Blacklists');
   assert.equal(blacklist.options.find((option) => option.name === 'list').description, 'List users in Relay. Blacklists');
   assert.equal(deepSearch.description, 'Ban users in Relay. Blacklists');
+  assert.ok(reportUser.options.some((option) => option.name === 'user_id' && option.required));
+  assert.ok(reportUser.options.some((option) => option.name === 'reason' && option.required));
+  assert.ok(reportUser.options.some((option) => option.name === 'proof_url' && !option.required));
+  assert.ok(reportUser.options.some((option) => option.name === 'proof_image' && !option.required));
   assert.ok(commands.every((command) => command.description.length <= 100));
   assert.ok(blacklist.options.every((option) => option.description.length <= 100));
   const add = blacklist.options.find((option) => option.name === 'add');
