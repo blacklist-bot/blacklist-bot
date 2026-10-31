@@ -1,7 +1,16 @@
 {
   "sourceGuildName": "Relay. Blacklists",
-  "generatedAt": "2026-10-30T12:30:08.701Z",
+  "generatedAt": "2026-10-31T14:31:56.932Z",
   "entries": [
+    {
+      "userId": "1397216914903924777",
+      "username": "official_bennydogplayz",
+      "addedAt": "2026-10-31 14:31:55",
+      "reason": "Predetory Behaviour Asking under18 for sexual images",
+      "proofUrl": "",
+      "proofImageUrl": "",
+      "proofImageType": ""
+    },
     {
       "userId": "1309040895009620060",
       "username": "randomannoyingperson2011",
