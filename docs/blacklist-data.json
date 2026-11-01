@@ -1,12 +1,21 @@
 {
   "sourceGuildName": "Relay. Blacklists",
-  "generatedAt": "2026-11-01T10:39:20.414Z",
+  "generatedAt": "2026-11-01T10:41:58.840Z",
   "entries": [
+    {
+      "userId": "1397216914903924777",
+      "username": "official_bennydogplayz",
+      "addedAt": "2026-10-31 14:31:55",
+      "reason": "Predetory Behaviour Asking under18 for sexual images",
+      "proofUrl": "",
+      "proofImageUrl": "",
+      "proofImageType": ""
+    },
     {
       "userId": "1309040895009620060",
       "username": "randomannoyingperson2011",
-      "addedAt": "2026-10-28 11:19:27",
-      "reason": "underage",
+      "addedAt": "2026-10-28 11:50:23",
+      "reason": "",
       "proofUrl": "",
       "proofImageUrl": "",
       "proofImageType": ""
@@ -14,7 +23,7 @@
     {
       "userId": "1397177059524214835",
       "username": "harleyc_15",
-      "addedAt": "2026-10-26 21:45:54",
+      "addedAt": "2026-10-27 10:40:40",
       "reason": "Racism, CSAM(Child Sexual Abuse Matrial), Doxxing, Raiding, NSFW.",
       "proofUrl": "https://docs.google.com/document/d/19_RLiFRG-vJz_O2TVgmR-z-EIzaugujcfBuFbWJ13JE/edit?usp=sharing",
       "proofImageUrl": "",
