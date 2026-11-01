@@ -1,5 +1,6 @@
 const http = require('node:http');
 const { parseReport, sendReport } = require('./report-webhook');
+const { parseAppeal, sendAppeal } = require('./appeal-webhook');
 
 const MAX_BODY_BYTES = 6 * 1024 * 1024;
 const RATE_WINDOW_MS = 60 * 60 * 1000;
@@ -7,8 +8,10 @@ const RATE_LIMIT = 8;
 
 function createReportServer({
   webhook,
+  appealWebhook,
   allowedOrigin = 'https://blacklist-bot.github.io',
   sendReportFn = sendReport,
+  sendAppealFn = sendAppeal,
   logger = console,
 } = {}) {
   const submissionsByAddress = new Map();
@@ -28,7 +31,12 @@ function createReportServer({
       return;
     }
 
-    if (request.url !== '/api/reports') {
+    const submissionType = request.url === '/api/reports'
+      ? 'report'
+      : request.url === '/api/appeals'
+        ? 'appeal'
+        : '';
+    if (!submissionType) {
       response.writeHead(404);
       response.end();
       return;
@@ -52,9 +60,10 @@ function createReportServer({
       return;
     }
 
-    if (!webhook) {
+    const destinationWebhook = submissionType === 'appeal' ? appealWebhook : webhook;
+    if (!destinationWebhook) {
       response.writeHead(503, { 'Content-Type': 'application/json' });
-      response.end(JSON.stringify({ error: 'Report submissions are not configured yet.' }));
+      response.end(JSON.stringify({ error: `${submissionType === 'appeal' ? 'Appeals' : 'Report submissions'} are not configured yet.` }));
       return;
     }
 
@@ -93,14 +102,12 @@ function createReportServer({
       const body = JSON.parse(Buffer.concat(chunks).toString('utf8'));
       if (body.website) {
         response.writeHead(400, { 'Content-Type': 'application/json' });
-        response.end(JSON.stringify({ error: 'Invalid report.' }));
+        response.end(JSON.stringify({ error: 'Invalid submission.' }));
         return;
       }
-      report = parseReport({
-        ...body,
-        reporterName: 'Website visitor',
-        source: 'Website',
-      });
+      report = submissionType === 'appeal'
+        ? parseAppeal(body)
+        : parseReport({ ...body, reporterName: 'Website visitor', source: 'Website' });
     } catch (error) {
       response.writeHead(400, { 'Content-Type': 'application/json' });
       response.end(JSON.stringify({ error: error.message === 'Unexpected end of JSON input' ? 'Invalid report data.' : error.message }));
@@ -108,7 +115,11 @@ function createReportServer({
     }
 
     try {
-      await sendReportFn(webhook, report);
+      if (submissionType === 'appeal') {
+        await sendAppealFn(destinationWebhook, report);
+      } else {
+        await sendReportFn(destinationWebhook, report);
+      }
       recentSubmissions.push(now);
       submissionsByAddress.set(address, recentSubmissions);
       response.writeHead(202, { 'Content-Type': 'application/json' });

@@ -10,6 +10,7 @@ const { createPagesPublisher } = require('../src/pages-publisher');
 const { normalizeHttpUrl } = require('../src/url-validation');
 const { parseReport, sendReport } = require('../src/report-webhook');
 const { createReportServer } = require('../src/report-server');
+const { parseAppeal, sendAppeal } = require('../src/appeal-webhook');
 
 test('admin ID configuration trims values and ignores empty entries', () => {
   const adminIds = parseAdminIds(' 123, ,456,123 ');
@@ -47,6 +48,9 @@ test('blacklist entries are unique per user and server', () => {
     assert.equal(store.add('guild-b', 'user-1', '', 'mod-2'), true);
     assert.equal(store.get('guild-a', 'user-1').reason, 'reason');
     assert.equal(store.get('guild-a', 'user-1').username, 'relayuser');
+    store.recordHistory('guild-a', 'user-1', 'added', 'mod-1', store.get('guild-a', 'user-1'));
+    store.recordHistory('guild-a', 'user-1', 'removed', 'mod-2', store.get('guild-a', 'user-1'), 'Appeal accepted');
+    assert.deepEqual(store.history('guild-a', 'user-1', 2).map((entry) => entry.action), ['removed', 'added']);
     assert.equal(store.list('guild-a').length, 1);
     assert.deepEqual(
       store.listAll().map((entry) => entry.guild_id),
@@ -111,6 +115,31 @@ test('report webhook includes review fields and image evidence', async () => {
   assert.equal(sent.files[0].name, 'proof.png');
 });
 
+test('appeal validation requires the user ID, original reason, and appeal statement', () => {
+  const appeal = parseAppeal({
+    userId: '12345678901234567',
+    blacklistReason: 'Original blacklist reason',
+    appealStatement: 'I would like admins to review this decision.',
+  });
+
+  assert.equal(appeal.userId, '12345678901234567');
+  assert.throws(() => parseAppeal({ ...appeal, appealStatement: 'short' }), /Appeal explanation/);
+});
+
+test('appeal webhook sends the explanation for admin review', async () => {
+  let sent;
+  const appeal = parseAppeal({
+    userId: '12345678901234567',
+    blacklistReason: 'Original blacklist reason',
+    appealStatement: 'Please review this blacklist decision.',
+  });
+
+  await sendAppeal({ send: async (payload) => { sent = payload; } }, appeal);
+
+  assert.equal(sent.embeds[0].data.title, 'Blacklist appeal for review');
+  assert.ok(sent.embeds[0].data.fields.some((field) => field.name === 'Why the appeal should be accepted'));
+});
+
 test('website report endpoint restricts origins and forwards sanitized reports', async (t) => {
   let sentReport;
   const server = createReportServer({
@@ -146,6 +175,38 @@ test('website report endpoint restricts origins and forwards sanitized reports',
   assert.equal(sentReport.source, 'Website');
   assert.equal(sentReport.reporterName, 'Website visitor');
   assert.equal(sentReport.userId, '12345678901234567');
+});
+
+test('website appeal endpoint sends validated appeals only to the appeal webhook', async (t) => {
+  let sentAppeal;
+  let appealWebhookUsed;
+  const server = createReportServer({
+    webhook: { name: 'reports' },
+    appealWebhook: { name: 'appeals' },
+    allowedOrigin: 'https://blacklist-bot.github.io',
+    sendAppealFn: async (webhook, appeal) => {
+      appealWebhookUsed = webhook.name;
+      sentAppeal = appeal;
+    },
+    logger: { error() {} },
+  });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  t.after(() => new Promise((resolve) => server.close(resolve)));
+
+  const response = await fetch(`http://127.0.0.1:${server.address().port}/api/appeals`, {
+    method: 'POST',
+    headers: { Origin: 'https://blacklist-bot.github.io', 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      userId: '12345678901234567',
+      blacklistReason: 'Original blacklist reason',
+      appealStatement: 'Please reconsider this blacklist decision.',
+    }),
+  });
+
+  assert.equal(response.status, 202);
+  assert.equal(appealWebhookUsed, 'appeals');
+  assert.equal(sentAppeal.userId, '12345678901234567');
+  assert.equal(sentAppeal.source, undefined);
 });
 
 test('website reports use a fixed reporter label without requiring sign-in', () => {
@@ -340,6 +401,7 @@ test('slash-command descriptions use Relay. Blacklists and stay within Discord l
   const blacklist = commands.find((command) => command.name === 'blacklist');
   const deepSearch = commands.find((command) => command.name === 'deep-search');
   const reportUser = commands.find((command) => command.name === 'report-user');
+  const checkUser = commands.find((command) => command.name === 'check-user');
 
   assert.equal(blacklist.description, 'Manage Relay. Blacklists');
   assert.equal(blacklist.options.find((option) => option.name === 'list').description, 'List users in Relay. Blacklists');
@@ -348,6 +410,7 @@ test('slash-command descriptions use Relay. Blacklists and stay within Discord l
   assert.ok(reportUser.options.some((option) => option.name === 'reason' && option.required));
   assert.ok(reportUser.options.some((option) => option.name === 'proof_url' && !option.required));
   assert.ok(reportUser.options.some((option) => option.name === 'proof_image' && !option.required));
+  assert.ok(checkUser.options.some((option) => option.name === 'user_id' && option.required));
   assert.ok(commands.every((command) => command.description.length <= 100));
   assert.ok(blacklist.options.every((option) => option.description.length <= 100));
   const add = blacklist.options.find((option) => option.name === 'add');

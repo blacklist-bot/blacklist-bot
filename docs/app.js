@@ -10,6 +10,10 @@ const reportDialog = document.querySelector('#report-dialog');
 const reportForm = document.querySelector('#report-form');
 const reportStatus = document.querySelector('#report-status');
 const reportSubmitButton = document.querySelector('#submit-report');
+const appealDialog = document.querySelector('#appeal-dialog');
+const appealForm = document.querySelector('#appeal-form');
+const appealStatus = document.querySelector('#appeal-status');
+const appealSubmitButton = document.querySelector('#submit-appeal');
 
 let entries = [];
 
@@ -244,6 +248,52 @@ reportForm.addEventListener('submit', async (event) => {
     reportStatus.textContent = error.message || 'Report service is unavailable. Try again later.';
   } finally {
     reportSubmitButton.disabled = false;
+  }
+});
+document.querySelector('#open-appeal').addEventListener('click', () => {
+  appealStatus.textContent = '';
+  appealDialog.showModal();
+});
+document.querySelector('#close-appeal').addEventListener('click', () => appealDialog.close());
+document.querySelector('#cancel-appeal').addEventListener('click', () => appealDialog.close());
+appealForm.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  appealStatus.textContent = '';
+
+  const formData = new FormData(appealForm);
+  const userId = String(formData.get('userId') || '').trim();
+  const blacklistReason = String(formData.get('blacklistReason') || '').trim();
+  const appealStatement = String(formData.get('appealStatement') || '').trim();
+  if (!/^\d{17,20}$/.test(userId)) {
+    appealStatus.textContent = 'Enter a valid Discord user ID.';
+    return;
+  }
+  if (blacklistReason.length < 5 || blacklistReason.length > 1000) {
+    appealStatus.textContent = 'Enter the original blacklist reason (5 to 1,000 characters).';
+    return;
+  }
+  if (appealStatement.length < 10 || appealStatement.length > 1500) {
+    appealStatus.textContent = 'Appeal explanation must be between 10 and 1,500 characters.';
+    return;
+  }
+
+  appealSubmitButton.disabled = true;
+  appealStatus.textContent = 'Sending appeal...';
+  try {
+    const response = await fetch(window.APPEAL_API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, blacklistReason, appealStatement }),
+    });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || 'Appeal could not be sent.');
+
+    appealForm.reset();
+    appealStatus.textContent = 'Appeal sent to admins for review. Your blacklist status has not changed.';
+  } catch (error) {
+    appealStatus.textContent = error.message || 'Appeal service is unavailable. Try again later.';
+  } finally {
+    appealSubmitButton.disabled = false;
   }
 });
 document.addEventListener('keydown', (event) => {

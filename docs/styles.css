@@ -40,9 +40,10 @@ a { color: inherit; }
 .wordmark-dot { color: var(--accent); }
 .wordmark-sub { color: var(--muted); font-size: 11px; font-weight: 500; }
 .header-actions { display: flex; align-items: center; gap: 20px; }
-.report-button { min-height: 36px; padding: 0 11px; border: 1px solid var(--line); color: var(--text); background: transparent; cursor: pointer; font-size: 11px; font-weight: 600; white-space: nowrap; }
+.report-button, .appeal-button { min-height: 36px; padding: 0 11px; border: 1px solid var(--line); color: var(--text); background: transparent; cursor: pointer; font-size: 11px; font-weight: 600; white-space: nowrap; }
 .report-button:hover { border-color: var(--accent); color: var(--accent-soft); }
-.report-button:focus-visible, .dialog-close:focus-visible, .dialog-cancel:focus-visible, .dialog-submit:focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 3px; }
+.appeal-button:hover { border-color: var(--accent); color: var(--accent-soft); }
+.report-button:focus-visible, .appeal-button:focus-visible, .dialog-close:focus-visible, .dialog-cancel:focus-visible, .dialog-submit:focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 3px; }
 .invite-button { min-height: 36px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 0 11px; border: 1px solid var(--accent); color: var(--accent-soft); background: transparent; font-size: 11px; font-weight: 600; text-decoration: none; white-space: nowrap; transition: background-color .15s ease, color .15s ease; }
 .invite-button:hover { color: var(--background); background: var(--accent); }
 .invite-button:focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 3px; }
@@ -140,6 +141,9 @@ kbd { padding: 2px 6px; border: 1px solid var(--line); color: var(--subtle); fon
   .topbar { min-height: 72px; height: auto; gap: 10px; }
   .header-actions { gap: 0; }
   .report-button { min-height: 34px; padding: 0 7px; font-size: 10px; }
+  .appeal-button { min-height: 34px; padding: 0 7px; font-size: 10px; }
+  .appeal-long { display: none; }
+  .appeal-short { display: inline; }
   .invite-button { min-height: 34px; gap: 6px; padding: 0 8px; font-size: 10px; }
   .invite-button svg { width: 13px; height: 13px; flex-basis: 13px; }
   .live-indicator { display: none; }

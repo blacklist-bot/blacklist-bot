@@ -79,6 +79,18 @@ function createCommands() {
       .setDescription(`Ban users in ${blacklistLabel}`)
       .setDefaultMemberPermissions(null),
     new SlashCommandBuilder()
+      .setName('check-user')
+      .setDescription('Check a user\'s current and previous blacklist records')
+      .setDefaultMemberPermissions(null)
+      .addStringOption((option) =>
+        option
+          .setName('user_id')
+          .setDescription('Discord user ID to check')
+          .setMinLength(17)
+          .setMaxLength(20)
+          .setRequired(true),
+      ),
+    new SlashCommandBuilder()
       .setName('report-user')
       .setDescription('Submit a user report for admin review')
       .setDefaultMemberPermissions(null)

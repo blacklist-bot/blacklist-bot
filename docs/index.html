@@ -9,9 +9,9 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=report-dialog-20261028">
-    <script src="report-config.js?v=report-dialog-20261028" defer></script>
-    <script src="app.js?v=website-visitor-20261028" defer></script>
+    <link rel="stylesheet" href="styles.css?v=appeal-check-user-20261101">
+    <script src="report-config.js?v=appeal-check-user-20261101" defer></script>
+    <script src="app.js?v=appeal-check-user-20261101" defer></script>
   </head>
   <body>
     <div class="site-frame">
@@ -22,6 +22,10 @@
         </a>
         <div class="header-actions">
           <button class="report-button" id="open-report" type="button">Report User</button>
+          <button class="appeal-button" id="open-appeal" type="button">
+            <span class="appeal-long">Appeal Blacklist</span>
+            <span class="appeal-short">Appeal</span>
+          </button>
           <a
             class="invite-button"
             href="https://discord.com/oauth2/authorize?client_id=1564341835990568970&amp;permissions=4&amp;scope=bot%20applications.commands"
@@ -123,6 +127,36 @@
         <div class="report-actions">
           <button class="dialog-cancel" id="cancel-report" type="button">Cancel</button>
           <button class="dialog-submit" id="submit-report" type="submit">Send report</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog class="report-dialog" id="appeal-dialog" aria-labelledby="appeal-title">
+      <form class="report-form" id="appeal-form">
+        <div class="report-dialog-head">
+          <div>
+            <p class="section-index">PRIVATE REVIEW QUEUE</p>
+            <h2 id="appeal-title">Appeal a blacklist</h2>
+          </div>
+          <button class="dialog-close" id="close-appeal" type="button" aria-label="Close appeal form">×</button>
+        </div>
+        <p class="report-intro">Appeals go to admins for review. Submitting an appeal does not automatically remove a blacklist entry or ban.</p>
+        <label class="report-field">
+          <span>Your Discord user ID</span>
+          <input name="userId" type="text" inputmode="numeric" pattern="[0-9]{17,20}" minlength="17" maxlength="20" autocomplete="off" required>
+        </label>
+        <label class="report-field">
+          <span>Reason for your blacklist</span>
+          <textarea name="blacklistReason" minlength="5" maxlength="1000" rows="3" required></textarea>
+        </label>
+        <label class="report-field">
+          <span>Why should admins accept your appeal?</span>
+          <textarea name="appealStatement" minlength="10" maxlength="1500" rows="5" required></textarea>
+        </label>
+        <p class="report-status" id="appeal-status" role="status" aria-live="polite"></p>
+        <div class="report-actions">
+          <button class="dialog-cancel" id="cancel-appeal" type="button">Cancel</button>
+          <button class="dialog-submit" id="submit-appeal" type="submit">Send appeal</button>
         </div>
       </form>
     </dialog>

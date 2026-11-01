@@ -28,6 +28,9 @@ const auditWebhook = process.env.BLACKLIST_AUDIT_WEBHOOK_URL
 const reportWebhook = process.env.REPORT_WEBHOOK_URL
   ? new WebhookClient({ url: process.env.REPORT_WEBHOOK_URL })
   : null;
+const appealWebhook = process.env.APPEAL_WEBHOOK_URL
+  ? new WebhookClient({ url: process.env.APPEAL_WEBHOOK_URL })
+  : null;
 
 if (!DISCORD_TOKEN) {
   console.error('Set DISCORD_TOKEN in your .env file.');
@@ -43,6 +46,7 @@ const pagesPublisher = createPagesPublisher();
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers] });
 const reportServer = createReportServer({
   webhook: reportWebhook,
+  appealWebhook,
   allowedOrigin: process.env.REPORT_WEBSITE_ORIGIN || 'https://blacklist-bot.github.io',
 });
 
@@ -112,6 +116,7 @@ client.once(Events.ClientReady, (readyClient) => {
     console.log(`Public report endpoint listening on port ${reportPort}`);
   });
   if (!reportWebhook) console.warn('REPORT_WEBHOOK_URL is empty; report submissions will return 503.');
+  if (!appealWebhook) console.warn('APPEAL_WEBHOOK_URL is empty; appeal submissions will return 503.');
   void syncPublicBlacklist();
 });
 
@@ -223,6 +228,59 @@ client.on(Events.InteractionCreate, async (interaction) => {
       return;
     }
 
+    if (interaction.commandName === 'check-user') {
+      const userId = interaction.options.getString('user_id');
+      if (!/^\d{17,20}$/.test(userId)) {
+        await interaction.reply({ content: 'Enter a valid Discord user ID.', ephemeral: true });
+        return;
+      }
+
+      const currentEntry = store.get(blacklistSourceGuildId, userId);
+      const history = store.history(blacklistSourceGuildId, userId, 5);
+      if (!currentEntry && history.length === 0) {
+        await interaction.reply({ content: 'This user has no current or recorded previous blacklist entries.', ephemeral: true });
+        return;
+      }
+
+      let username = currentEntry?.username || history.find((event) => event.username)?.username || '';
+      if (!username) {
+        try {
+          username = (await client.users.fetch(userId)).username?.slice(0, 100) ?? '';
+        } catch {
+          username = 'Username unavailable';
+        }
+      }
+
+      const embed = new EmbedBuilder()
+        .setColor(currentEntry ? 0xdf7968 : 0x91a778)
+        .setTitle('User blacklist history')
+        .setDescription(`**${username}** (${userId})`)
+        .addFields({ name: 'Current status', value: currentEntry ? 'Currently blacklisted' : 'Not currently blacklisted' });
+      if (currentEntry?.reason) {
+        embed.addFields({ name: 'Current reason', value: currentEntry.reason.slice(0, 1024) });
+      }
+      if (currentEntry?.proof_url) {
+        embed.addFields({ name: 'Current proof link', value: currentEntry.proof_url.slice(0, 1024) });
+      }
+      if (currentEntry?.proof_image_url) {
+        embed.addFields({ name: 'Current proof image', value: currentEntry.proof_image_url.slice(0, 1024) });
+      }
+      for (const [index, event] of history.entries()) {
+        const detail = [
+          event.reason ? `Reason: ${event.reason}` : '',
+          event.action_reason ? `Action note: ${event.action_reason}` : '',
+          event.proof_url ? `Proof link: ${event.proof_url}` : '',
+          event.proof_image_url ? `Proof image: ${event.proof_image_url}` : '',
+        ].filter(Boolean).join('\n').slice(0, 1024) || 'No reason or proof was recorded.';
+        embed.addFields({
+          name: `${event.action === 'added' ? 'Added' : 'Removed'} · ${event.created_at} · ${index + 1}`.slice(0, 256),
+          value: detail,
+        });
+      }
+      await interaction.reply({ embeds: [embed], ephemeral: true });
+      return;
+    }
+
     if (interaction.commandName === 'blacklist') {
       const subcommand = interaction.options.getSubcommand();
       if (subcommand === 'list') {
@@ -298,6 +356,13 @@ client.on(Events.InteractionCreate, async (interaction) => {
           throw error;
         }
 
+        store.recordHistory(blacklistSourceGuildId, userId, 'added', interaction.user.id, {
+          username,
+          reason,
+          proof_url: proofUrl,
+          proof_image_url: proofImage?.url ?? '',
+          proof_image_type: proofImage?.contentType ?? '',
+        });
         await syncPublicBlacklist();
         await sendBlacklistAudit('added', interaction, userId, reason);
           await interaction.editReply(`Blacklisted and banned <@${userId}> from this server.`);
@@ -306,10 +371,13 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
       if (subcommand === 'remove') {
         const reason = interaction.options.getString('reason')?.trim() ?? '';
-        if (!store.remove(blacklistSourceGuildId, userId)) {
+        const existingEntry = store.get(blacklistSourceGuildId, userId);
+        if (!existingEntry) {
           await interaction.reply({ content: `<@${userId}> is not on this server's blacklist.`, ephemeral: true });
           return;
         }
+        store.recordHistory(blacklistSourceGuildId, userId, 'removed', interaction.user.id, existingEntry, reason);
+        store.remove(blacklistSourceGuildId, userId);
         await syncPublicBlacklist();
 
         let unbanned = false;

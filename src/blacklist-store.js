@@ -38,6 +38,22 @@ function createBlacklistStore(databasePath = process.env.DATABASE_PATH || 'data/
       PRIMARY KEY (target_guild_id, source_guild_id, user_id)
     )
   `);
+  database.exec(`
+    CREATE TABLE IF NOT EXISTS blacklist_history (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      guild_id TEXT NOT NULL,
+      user_id TEXT NOT NULL,
+      action TEXT NOT NULL CHECK (action IN ('added', 'removed')),
+      username TEXT NOT NULL DEFAULT '',
+      reason TEXT NOT NULL DEFAULT '',
+      proof_url TEXT NOT NULL DEFAULT '',
+      proof_image_url TEXT NOT NULL DEFAULT '',
+      proof_image_type TEXT NOT NULL DEFAULT '',
+      action_reason TEXT NOT NULL DEFAULT '',
+      actor_id TEXT NOT NULL DEFAULT '',
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
 
   const addEntry = database.prepare(`
     INSERT OR IGNORE INTO blacklist (
@@ -69,6 +85,20 @@ function createBlacklistStore(databasePath = process.env.DATABASE_PATH || 'data/
   const removeManagedBan = database.prepare(
     'DELETE FROM managed_blacklist_bans WHERE target_guild_id = ? AND source_guild_id = ? AND user_id = ?',
   );
+  const insertHistoryEntry = database.prepare(`
+    INSERT INTO blacklist_history (
+      guild_id, user_id, action, username, reason, proof_url, proof_image_url,
+      proof_image_type, action_reason, actor_id
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `);
+  const listHistoryEntries = database.prepare(`
+    SELECT guild_id, user_id, action, username, reason, proof_url, proof_image_url,
+      proof_image_type, action_reason, actor_id, created_at
+    FROM blacklist_history
+    WHERE guild_id = ? AND user_id = ?
+    ORDER BY id DESC
+    LIMIT ?
+  `);
 
   return {
     add(guildId, userId, reason, createdBy, proofUrl = '', proofImageUrl = '', proofImageType = '', username = '') {
@@ -88,6 +118,21 @@ function createBlacklistStore(databasePath = process.env.DATABASE_PATH || 'data/
     remove: (guildId, userId) => removeEntry.run(guildId, userId).changes === 1,
     list: (guildId) => listEntries.all(guildId),
     listAll: () => listAllEntries.all(),
+    recordHistory(guildId, userId, action, actorId, entry, actionReason = '') {
+      return insertHistoryEntry.run(
+        guildId,
+        userId,
+        action,
+        entry.username || '',
+        entry.reason || '',
+        entry.proof_url || '',
+        entry.proof_image_url || '',
+        entry.proof_image_type || '',
+        actionReason,
+        actorId,
+      ).changes === 1;
+    },
+    history: (guildId, userId, limit = 10) => listHistoryEntries.all(guildId, userId, limit),
     listManagedBans: (targetGuildId, sourceGuildId) => listManagedBans.all(targetGuildId, sourceGuildId),
     addManagedBan: (targetGuildId, sourceGuildId, userId) =>
       addManagedBan.run(targetGuildId, sourceGuildId, userId).changes === 1,
