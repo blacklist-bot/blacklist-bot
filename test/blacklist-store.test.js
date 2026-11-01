@@ -1,4 +1,5 @@
 const assert = require('node:assert/strict');
+const { createHash } = require('node:crypto');
 const test = require('node:test');
 const { createBlacklistStore } = require('../src/blacklist-store');
 const { canManageBlacklist, canRunDeepSearch, parseAdminIds } = require('../src/authorization');
@@ -51,12 +52,14 @@ test('blacklist entries are unique per user and server', () => {
     store.recordHistory('guild-a', 'user-1', 'added', 'mod-1', store.get('guild-a', 'user-1'));
     store.recordHistory('guild-a', 'user-1', 'removed', 'mod-2', store.get('guild-a', 'user-1'), 'Appeal accepted');
     assert.deepEqual(store.history('guild-a', 'user-1', 2).map((entry) => entry.action), ['removed', 'added']);
+    assert.deepEqual(store.removedUserIds('guild-a'), []);
     assert.equal(store.list('guild-a').length, 1);
     assert.deepEqual(
       store.listAll().map((entry) => entry.guild_id),
       ['guild-a', 'guild-b'],
     );
     assert.equal(store.remove('guild-a', 'user-1'), true);
+    assert.deepEqual(store.removedUserIds('guild-a'), ['user-1']);
     assert.equal(store.get('guild-a', 'user-1'), undefined);
     assert.ok(store.get('guild-b', 'user-1'));
     assert.equal(store.addManagedBan('target-guild', 'guild-a', 'user-1'), true);
@@ -459,4 +462,84 @@ test('Pages publisher writes only public IDs and dates to the repository snapsho
   }]);
   assert.equal(JSON.stringify(snapshot).includes('moderator-id'), false);
   assert.equal(requests[1].options.headers.Authorization, 'Bearer test-token');
+});
+
+test('Pages sync preserves prior records unless an explicit removal is recorded', async () => {
+  const requests = [];
+  const existingData = {
+    sourceGuildName: 'Relay. Blacklists',
+    entries: [
+      { userId: '111111111111111111', username: 'prior-entry', addedAt: '2026-10-25 12:00:00' },
+      { userId: '222222222222222222', username: 'removed-entry', addedAt: '2026-10-24 12:00:00' },
+    ],
+  };
+  const publisher = createPagesPublisher({
+    token: 'test-token',
+    repository: 'owner/repo',
+    logger: { warn() {}, error() {} },
+    fetchImpl: async (url, options = {}) => {
+      requests.push({ url, options });
+      if (!options.method) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            sha: 'current-sha',
+            content: Buffer.from(JSON.stringify(existingData)).toString('base64'),
+          }),
+        };
+      }
+      return { ok: true, status: 200 };
+    },
+  });
+
+  const published = await publisher.publish([
+    { user_id: '333333333333333333', username: 'new-entry', created_at: '2026-10-26 12:00:00' },
+  ], 'Relay. Blacklists', ['222222222222222222']);
+
+  const updateBody = JSON.parse(requests[1].options.body);
+  const snapshot = JSON.parse(Buffer.from(updateBody.content, 'base64').toString('utf8'));
+  assert.equal(published, true);
+  assert.deepEqual(snapshot.entries.map((entry) => entry.userId), [
+    '333333333333333333',
+    '111111111111111111',
+  ]);
+});
+
+test('snapshot tombstones prevent stale syncs from restoring removed records but allow a later add', async () => {
+  let snapshot = {
+    sourceGuildName: 'Relay. Blacklists',
+    removedUserHashes: [],
+    entries: [{ userId: '222222222222222222', username: 'removed-entry', addedAt: '2026-10-24 12:00:00' }],
+  };
+  const publisher = createPagesPublisher({
+    token: 'test-token',
+    repository: 'owner/repo',
+    logger: { warn() {}, error() {} },
+    fetchImpl: async (url, options = {}) => {
+      if (!options.method) {
+        return { ok: true, status: 200, json: async () => ({ sha: 'current-sha', content: Buffer.from(JSON.stringify(snapshot)).toString('base64') }) };
+      }
+      snapshot = JSON.parse(Buffer.from(JSON.parse(options.body).content, 'base64').toString('utf8'));
+      return { ok: true, status: 200 };
+    },
+  });
+  const removedId = '222222222222222222';
+  const removedHash = createHash('sha256').update(removedId).digest('hex');
+
+  await publisher.publish([], 'Relay. Blacklists', [removedId]);
+  assert.deepEqual(snapshot.entries, []);
+  assert.deepEqual(snapshot.removedUserHashes, [removedHash]);
+  assert.equal(JSON.stringify(snapshot).includes(removedId), false);
+
+  await publisher.publish([
+    { user_id: removedId, username: 'stale-copy', created_at: '2026-10-24 12:00:00' },
+  ], 'Relay. Blacklists');
+  assert.deepEqual(snapshot.entries, []);
+
+  await publisher.publish([
+    { user_id: removedId, username: 're-added', created_at: '2026-11-01 12:00:00' },
+  ], 'Relay. Blacklists', [], [removedId]);
+  assert.deepEqual(snapshot.entries.map((entry) => entry.userId), [removedId]);
+  assert.deepEqual(snapshot.removedUserHashes, []);
 });

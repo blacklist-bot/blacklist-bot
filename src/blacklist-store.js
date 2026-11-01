@@ -99,6 +99,30 @@ function createBlacklistStore(databasePath = process.env.DATABASE_PATH || 'data/
     ORDER BY id DESC
     LIMIT ?
   `);
+  const listLatestHistoryActions = database.prepare(`
+    SELECT event.user_id, event.action
+    FROM blacklist_history AS event
+    WHERE event.guild_id = ?
+      AND event.id = (
+        SELECT MAX(latest.id)
+        FROM blacklist_history AS latest
+        WHERE latest.guild_id = event.guild_id AND latest.user_id = event.user_id
+      )
+  `);
+  const listLatestRemovedUserIds = database.prepare(`
+    SELECT event.user_id
+    FROM blacklist_history AS event
+    WHERE event.guild_id = ? AND event.action = 'removed'
+      AND event.id = (
+        SELECT MAX(latest.id)
+        FROM blacklist_history AS latest
+        WHERE latest.guild_id = event.guild_id AND latest.user_id = event.user_id
+      )
+      AND NOT EXISTS (
+        SELECT 1 FROM blacklist AS current
+        WHERE current.guild_id = event.guild_id AND current.user_id = event.user_id
+      )
+  `);
 
   return {
     add(guildId, userId, reason, createdBy, proofUrl = '', proofImageUrl = '', proofImageType = '', username = '') {
@@ -133,6 +157,8 @@ function createBlacklistStore(databasePath = process.env.DATABASE_PATH || 'data/
       ).changes === 1;
     },
     history: (guildId, userId, limit = 10) => listHistoryEntries.all(guildId, userId, limit),
+    latestHistoryActions: (guildId) => listLatestHistoryActions.all(guildId),
+    removedUserIds: (guildId) => listLatestRemovedUserIds.all(guildId).map((row) => row.user_id),
     listManagedBans: (targetGuildId, sourceGuildId) => listManagedBans.all(targetGuildId, sourceGuildId),
     addManagedBan: (targetGuildId, sourceGuildId, userId) =>
       addManagedBan.run(targetGuildId, sourceGuildId, userId).changes === 1,

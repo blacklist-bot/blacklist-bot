@@ -75,7 +75,13 @@ async function syncPublicBlacklist() {
   }
 
   const sourceName = await getBlacklistSourceName();
-  return pagesPublisher.publish(store.list(blacklistSourceGuildId), sourceName);
+  const latestActions = store.latestHistoryActions(blacklistSourceGuildId);
+  return pagesPublisher.publish(
+    store.list(blacklistSourceGuildId),
+    sourceName,
+    latestActions.filter((event) => event.action === 'removed').map((event) => event.user_id),
+    latestActions.filter((event) => event.action === 'added').map((event) => event.user_id),
+  );
 }
 
 async function sendBlacklistAudit(action, interaction, userId, reason, unbanned) {
