@@ -1,10 +1,19 @@
 {
   "sourceGuildName": "Relay. Blacklists",
-  "generatedAt": "2026-11-05T09:06:53.808Z",
+  "generatedAt": "2026-11-05T09:08:22.519Z",
   "removedUserHashes": [
     "5c6c782d0b2e76496da2a94a6bc945e888d5f5c59cdfad6ee09be8d9296fc22e"
   ],
   "entries": [
+    {
+      "userId": "1319846150102319137",
+      "username": "omn8",
+      "addedAt": "2026-11-05 09:08:21",
+      "reason": "Raiding",
+      "proofUrl": "",
+      "proofImageUrl": "https://cdn.discordapp.com/ephemeral-attachments/1564349510342418655/1567827896360243201/Screen_Recording_2026-10-15_at_2.46.33_pm.mov?ex=6aed9903&is=6aec4783&hm=c4f717c9774bccb6e1a893cf857c7abe60a321211dda8ec760f5af1b88274dde&",
+      "proofImageType": "video/quicktime"
+    },
     {
       "userId": "1424596790396588052",
       "username": "noah.hours",
