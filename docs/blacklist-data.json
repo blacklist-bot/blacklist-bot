@@ -1,10 +1,17 @@
 {
   "sourceGuildName": "Relay. Blacklists",
-  "generatedAt": "2026-11-05T09:08:22.519Z",
-  "removedUserHashes": [
-    "5c6c782d0b2e76496da2a94a6bc945e888d5f5c59cdfad6ee09be8d9296fc22e"
-  ],
+  "generatedAt": "2026-11-05T09:10:11.163Z",
+  "removedUserHashes": [],
   "entries": [
+    {
+      "userId": "1397216914903924777",
+      "username": "official_bennydogplayz",
+      "addedAt": "2026-11-05 09:10:10",
+      "reason": "Predetory Behaviour Asking under18 for sexual images (proof is from **Astra Holdings**",
+      "proofUrl": "https://docs.google.com/document/d/1HicPr6SeJMqqxEi0F8ypUFwk4U6sKv1dcVkzPee3eM0/edit?usp=sharing",
+      "proofImageUrl": "",
+      "proofImageType": ""
+    },
     {
       "userId": "1319846150102319137",
       "username": "omn8",
