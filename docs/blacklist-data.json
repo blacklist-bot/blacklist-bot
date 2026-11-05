@@ -1,10 +1,19 @@
 {
   "sourceGuildName": "Relay. Blacklists",
-  "generatedAt": "2026-11-05T09:06:17.094Z",
+  "generatedAt": "2026-11-05T09:06:53.808Z",
   "removedUserHashes": [
     "5c6c782d0b2e76496da2a94a6bc945e888d5f5c59cdfad6ee09be8d9296fc22e"
   ],
   "entries": [
+    {
+      "userId": "1424596790396588052",
+      "username": "noah.hours",
+      "addedAt": "2026-11-05 09:06:50",
+      "reason": "Racial Slurs",
+      "proofUrl": "",
+      "proofImageUrl": "https://cdn.discordapp.com/ephemeral-attachments/1564349510342418655/1567827516981514240/image1_1.jpeg?ex=6aed98a8&is=6aec4728&hm=8af81f8ffccba36160e32bd5b47990dceaa3f9649eb0d8f2a9d7ea1ad67a77c3&",
+      "proofImageType": "image/jpeg"
+    },
     {
       "userId": "1309040895009620060",
       "username": "randomannoyingperson2011",
