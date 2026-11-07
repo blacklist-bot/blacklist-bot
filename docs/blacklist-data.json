@@ -1,8 +1,17 @@
 {
   "sourceGuildName": "Relay. Blacklists",
-  "generatedAt": "2026-11-05T09:10:11.163Z",
+  "generatedAt": "2026-11-07T09:52:46.730Z",
   "removedUserHashes": [],
   "entries": [
+    {
+      "userId": "1563126236312764526",
+      "username": "andrew069249",
+      "addedAt": "2026-11-07 09:52:45",
+      "reason": "Underage - Please visit https://blacklist-bot.github.io/blacklist-bot/ to see proof and to appeal",
+      "proofUrl": "",
+      "proofImageUrl": "https://cdn.discordapp.com/ephemeral-attachments/1564349510342418655/1568563849328590938/Screenshot_2026-11-06_at_9.07.50_pm.png?ex=6af0466c&is=6aeef4ec&hm=abde141525456794c7aa2ad935ad610d47ebe3d858d52d5146bc0f854bfefa90&",
+      "proofImageType": "image/png"
+    },
     {
       "userId": "1397216914903924777",
       "username": "official_bennydogplayz",
