@@ -1,8 +1,17 @@
 {
   "sourceGuildName": "Relay. Blacklists",
-  "generatedAt": "2026-11-24T20:09:33.586Z",
+  "generatedAt": "2026-11-24T20:10:31.738Z",
   "removedUserHashes": [],
   "entries": [
+    {
+      "userId": "1537930135003467918",
+      "username": "jess_123587.",
+      "addedAt": "2026-11-24 20:10:29",
+      "reason": "Talking to U18 inapropriatly when this individual is 23",
+      "proofUrl": "",
+      "proofImageUrl": "",
+      "proofImageType": ""
+    },
     {
       "userId": "1563126236312764526",
       "username": "andrew069249",
